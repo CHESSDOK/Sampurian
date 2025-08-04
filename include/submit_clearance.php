@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Create directory path
         $base_dir = "documents/";
         $user_dir = $user['l_name'] . ", " . $user['f_name'] . " " . $user['m_name'];
-        $upload_dir = $base_dir . $user_dir . "/Business Permit/";
+        $upload_dir = $base_dir . $user_dir . "/clearance/";
 
         // Create directory if it doesn't exist
         if (!file_exists($upload_dir)) {
@@ -31,53 +31,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $permit_id = "BP-" . date("Ymd") . "-" . strtoupper(bin2hex(random_bytes(6)));
 
         // File upload handling with error checking
-        $business_reg = uploadFile('doc_business_reg', $upload_dir, 'Business_Registration');
-        $cedula = uploadFile('doc_cedula', $upload_dir, 'Cedula');
-        $barangay_reqs = uploadFile('doc_others', $upload_dir, 'Barangay_Requirements');
+        $pic2x2 = uploadFile('picture', $upload_dir, '2x2');
         $payment_proof = isset($_FILES['payment_proof']) ? uploadFile('payment_proof', $upload_dir, 'Payment_Proof') : '';
 
         // Get form data
-        $kind_of_establishment = $_POST['establishment_name'];
-        $nature_of_business = $_POST['business_nature'];
+        $year_stay = $_POST['year_stay'];
+        $purpose = $_POST['purpose'];
         $payment_type = $_POST['payment_method'];
         $gcash_ref_no = isset($_POST['gcash_ref_no']) ? $_POST['gcash_ref_no'] : '';
 
         // Insert into database
-        $sql = "INSERT INTO business_permit (
-            permit_id, kind_of_establishment, nature_of_business, 
-            business_registration, cedula, barangay_requirements, payment_proof,
+        $sql = "INSERT INTO barangay_clearance (
+            permit_id, years_stay_in_barangay, purpose, 
+            attachment, payment_proof,
             user_id, payment_type, gcash_ref_no, created_at
         ) VALUES (
-            :permit_id, :kind_of_establishment, :nature_of_business, :payment_proof,
-            :business_reg, :cedula, :barangay_reqs,
+            :permit_id, :year_stay, :purpose,
+            :pic2x2, :payment_proof,
             :user_id, :payment_type, :gcash_ref_no, NOW()
         )";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':permit_id' => $permit_id,
-            ':kind_of_establishment' => $kind_of_establishment,
-            ':nature_of_business' => $nature_of_business,
+            ':year_stay' => $year_stay,
+            ':purpose' => $purpose,
+            ':pic2x2' => $pic2x2,
             ':payment_proof' => $payment_proof,
-            ':business_reg' => $business_reg,
-            ':cedula' => $cedula,
-            ':barangay_reqs' => $barangay_reqs,
             ':user_id' => $user_id,
             ':payment_type' => $payment_type,
             ':gcash_ref_no' => $gcash_ref_no
         ]);
 
         // Create notification
-        $message = "Your business permit application (ID: $permit_id) has been submitted successfully.";
+        $message = "Your barangay clearance application (ID: $permit_id) has been submitted successfully.";
         $notification_sql = "INSERT INTO notification (user_id, request_id, message) VALUES (?, ?, ?)";
         $pdo->prepare($notification_sql)->execute([$user_id, $permit_id, $message]);
 
-        $_SESSION['success_message'] = "Business permit application submitted successfully! Your permit ID is: $permit_id";
+        $_SESSION['success_message'] = "barangay clearance application submitted successfully! Your permit ID is: $permit_id";
         header("Location: ../dashboard.php");
         exit();
     } catch (PDOException $e) {
         $_SESSION['error_message'] = "Database error: " . $e->getMessage();
-        header("Location: ../barangay_permit.php");
+        header("Location: ../clearance.php");
         exit();
     }
 }
@@ -87,7 +83,7 @@ function uploadFile($field_name, $upload_dir, $file_prefix)
     if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {
         if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others' && $field_name !== 'payment_proof') {
             $_SESSION['error_message'] = "Required file is missing: " . $field_name;
-            header("Location: ../barangay_permit.php");
+            header("Location: ../clearance.php");
             exit();
         }
         return '';
@@ -101,7 +97,7 @@ function uploadFile($field_name, $upload_dir, $file_prefix)
     // Check file size (max 5MB)
     if ($file['size'] > 5000000) {
         $_SESSION['error_message'] = "File size too large. Maximum size is 5MB.";
-        header("Location: ../barangay_permit.php");
+        header("Location: ../clearance.php");
         exit();
     }
 
@@ -109,7 +105,7 @@ function uploadFile($field_name, $upload_dir, $file_prefix)
     $allowed_types = ['pdf', 'jpg', 'jpeg', 'png'];
     if (!in_array(strtolower($file_ext), $allowed_types)) {
         $_SESSION['error_message'] = "Only PDF, JPG, JPEG, PNG files are allowed.";
-        header("Location: ../barangay_permit.php");
+        header("Location: ../clearance.php");
         exit();
     }
 
@@ -117,7 +113,7 @@ function uploadFile($field_name, $upload_dir, $file_prefix)
         return $file_path;
     } else {
         $_SESSION['error_message'] = "Error uploading file.";
-        header("Location: ../barangay_permit.php");
+        header("Location: ../clearance.php");
         exit();
     }
 }

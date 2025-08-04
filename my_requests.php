@@ -12,13 +12,13 @@ $permits = [
     'Business Permit' => 'business_permit',
     'Business Permit Renewal' => 'business_permit_renewal',
     'Indigency' => 'indigency',
-    'Animal Bite Report' => 'animal_bite_investigation_report'
+    'Animal Bite Report' => 'animal_bite_reports'
 ];
 
 $rows = [];
 
 foreach ($permits as $label => $table) {
-    $sql = "SELECT id, status, gcash_ref_no, created_at FROM $table WHERE user_id = ?";
+    $sql = "SELECT id, status, gcash_ref_no, comment, created_at FROM $table WHERE user_id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$user_id]);
 
@@ -26,7 +26,7 @@ foreach ($permits as $label => $table) {
         $rows[] = [
             'type' => $label,
             'status' => ucfirst($row['status']),
-            'payment' => $row['gcash_ref_no'] ? 'Paid' : 'Unpaid',
+            'comment' => $row['comment'],
             'date' => date('d M Y', strtotime($row['created_at'])),
             'table' => $table,
             'id' => $row['id']
@@ -158,9 +158,8 @@ foreach ($permits as $label => $table) {
                 <div class="row row-header text-center">
                     <div class="col-md-3">Application Type</div>
                     <div class="col-md-2">Status</div>
-                    <div class="col-md-2">Payment</div>
                     <div class="col-md-2">Date</div>
-                    <div class="col-md-1">Details</div>
+                    <div class="col-md-3">Comments </div>
                     <div class="col-md-2">Download File</div>
                 </div>
 
@@ -169,8 +168,8 @@ foreach ($permits as $label => $table) {
                         <div class="row row-entry text-center">
                             <div class="col-md-3"><?php echo htmlspecialchars($row['type']); ?></div>
                             <div class="col-md-2"><?php echo htmlspecialchars($row['status']); ?></div>
-                            <div class="col-md-2"><?php echo htmlspecialchars($row['payment']); ?></div>
                             <div class="col-md-2"><?php echo htmlspecialchars($row['date']); ?></div>
+                            <div class="col-md-3"><?php echo htmlspecialchars($row['comment']); ?></div>
                             <div class="col-md-1">
                                 <a href="view_details.php?table=<?php echo urlencode($row['table']); ?>&id=<?php echo $row['id']; ?>" class="btn btn-outline-dark btn-sm">View</a>
                             </div>
