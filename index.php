@@ -10,7 +10,7 @@
 <body>
 
     <div class="container">
-        <img src="logo.png" alt="Barangay Logo">
+        <img src="assets/image/book.png" alt="Barangay Logo">
         <h2>Barangay Sampiruhan<br>E- Permit System</h2>
         <form action="include/login_auth.php" method="POST" id="loginForm">
             <input type="email" name="email" placeholder="Email" required>

@@ -148,7 +148,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             <div class="col-md-12 p-4 bg-teal text-white rounded">
                 <div class="row">
                     <div class="col-md-4 d-flex align-items-center justify-content-center">
-                        <img src="img/sampiruhanlogo.png" class="img-fluid" style="width: 100px;">
+                        <img src="assets/image/book.png" class="img-fluid" style="width: 100px;">
                     </div>
                     <div class="col-md-4 d-flex align-items-center justify-content-center">
                         <h2>Welcome to<br>Barangay Sampiruhan<br>E-Permit System</h2>
