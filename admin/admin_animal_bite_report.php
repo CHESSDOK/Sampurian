@@ -4,7 +4,7 @@ include 'admin_header.php';
 include '../include/config.php';
 
 $sql = "SELECT a.*, u.f_name, u.m_name, u.l_name, u.address 
-        FROM animal_bite_investigation_report a
+        FROM animal_bite_reports a
         LEFT JOIN users u ON a.user_id = u.id
         ORDER BY a.created_at DESC";
 $stmt = $pdo->query($sql);
@@ -32,15 +32,18 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php foreach($rows as $r): ?>
             <tr id="row-<?= $r['id'] ?>">
                 <td><?= htmlspecialchars($r['permit_id']) ?></td>
-                <td><?= htmlspecialchars(trim($r['f_name'].' '.$r['m_name'].' '.$r['l_name'])) ?></td>
+                <td><?= htmlspecialchars(trim($r['l_name'].', '.$r['f_name'].', '.$r['m_name'])) ?></td>
                 <td><?= htmlspecialchars($r['address'] ?? '-') ?></td>
-                <td><?= htmlspecialchars($r['date_bitten'] ?? '-') ?></td>
-                <td><?= htmlspecialchars($r['kind_of_animal_that_bite'] ?? '-') ?></td>
-                <td><?= htmlspecialchars($r['pet_color'] . ' / ' . $r['pet_marks']) ?></td>
-                <td><?= htmlspecialchars($r['name_of_the_owner'] ?? '-') ?></td>
+                <td><?= htmlspecialchars($r['bite_date'] ?? '-') ?></td>
+                <td><?= htmlspecialchars($r['animal_description'] ?? '-') ?></td>
+                <td><?= htmlspecialchars($r['color'] . ' / ' . $r['marks']) ?></td>
+                <td><?= htmlspecialchars($r['owner_name'] ?? '-') ?></td>
                 <td>
-                    <?= htmlspecialchars($r['payment_type'] ?? '-') ?>
-                    <?php if (!empty($r['gcash_ref_no'])): ?><div class="small-muted">Ref#: <?= htmlspecialchars($r['gcash_ref_no']) ?></div><?php endif; ?>
+                    <?= htmlspecialchars($r['payment_method'] ?? '-') ?>
+                    <?php if (!empty($r['gcash_ref_no'])): ?>
+                        <div class="small-muted">Ref#: <?= htmlspecialchars($r['gcash_ref_no']) ?></div>
+                        <a href="<?= htmlspecialchars($r['payment_proof']) ?>" target="_blank">Proof</a>
+                    <?php endif; ?>
                 </td>
                 <td>
                     <span class="badge bg-<?= $r['status']=="Approved" ? "success" : ($r['status']=="Declined" ? "danger" : "secondary") ?>">

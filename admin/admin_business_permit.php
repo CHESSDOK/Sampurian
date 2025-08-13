@@ -21,7 +21,8 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <th>Address</th>
                 <th>Establishment</th>
                 <th>Nature of Business</th>
-                <th>Payment</th>
+                <th>payment</th>
+                <th>attachment</th>
                 <th>Status</th>
                 <th>Requested On</th>
                 <th>Actions</th>
@@ -39,7 +40,10 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?= htmlspecialchars($r['payment_type'] ?? '-') ?>
                     <?php if (!empty($r['gcash_ref_no'])): ?>
                         <div class="small-muted">Ref#: <?= htmlspecialchars($r['gcash_ref_no']) ?></div>
+                        <a href="<?= htmlspecialchars($r['payment_proof']) ?>" target="_blank">Proof</a>
                     <?php endif; ?>
+                </td>
+                <td>
                     <?php if (!empty($r['business_registration'])): ?>
                         <a href="<?= htmlspecialchars($r['business_registration']) ?>" target="_blank">Business Reg</a><br>
                     <?php endif; ?>

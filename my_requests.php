@@ -160,7 +160,6 @@ foreach ($permits as $label => $table) {
                     <div class="col-md-2">Status</div>
                     <div class="col-md-2">Date</div>
                     <div class="col-md-3">Comments </div>
-                    <div class="col-md-2">Download File</div>
                 </div>
 
                 <?php if (count($rows) > 0): ?>
@@ -170,9 +169,6 @@ foreach ($permits as $label => $table) {
                             <div class="col-md-2"><?php echo htmlspecialchars($row['status']); ?></div>
                             <div class="col-md-2"><?php echo htmlspecialchars($row['date']); ?></div>
                             <div class="col-md-3"><?php echo htmlspecialchars($row['comment']); ?></div>
-                            <div class="col-md-1">
-                                <a href="view_details.php?table=<?php echo urlencode($row['table']); ?>&id=<?php echo $row['id']; ?>" class="btn btn-outline-dark btn-sm">View</a>
-                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>

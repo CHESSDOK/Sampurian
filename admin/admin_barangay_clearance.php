@@ -41,8 +41,10 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                 </td>
                 <td>
+                    <?= htmlspecialchars($r['payment_type'] ?? '-') ?>
                     <?php if (!empty($r['gcash_ref_no'])): ?>
                         <div>GCash Ref: <?= htmlspecialchars($r['gcash_ref_no']) ?></div>
+                        <a href="<?= htmlspecialchars($r['payment_proof']) ?>" target="_blank">Proof</a>
                     <?php else: ?>
                         -
                     <?php endif; ?>

@@ -9,7 +9,7 @@ $tables = [
     'Permit Renewals' => 'business_permit_renewal',
     'Barangay Clearances' => 'barangay_clearance',
     'Indigencies' => 'indigency',
-    'Animal Bite Reports' => 'animal_bite_investigation_report'
+    'Animal Bite Reports' => 'animal_bite_reports'
 ];
 
 // counts
@@ -63,23 +63,5 @@ foreach ($tables as $label => $t) {
 
 <?php include 'admin_footer.php'; ?>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-const ctx = document.getElementById('yearChart').getContext('2d');
-new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: <?= json_encode(array_keys($yearly)) ?>,
-        datasets: [{
-            label: 'Total requests',
-            data: <?= json_encode(array_values($yearly)) ?>,
-            tension: 0.3,
-            fill: true,
-            backgroundColor: 'rgba(13,110,253,0.08)',
-            borderColor: 'rgba(13,110,253,0.9)',
-            pointRadius:4
-        }]
-    },
-    options: { responsive: true, maintainAspectRatio:false }
-});
-</script>
+
+
