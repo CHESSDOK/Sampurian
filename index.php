@@ -1,26 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Barangay Sampiruhan E-Permit System</title>
-    <link rel="stylesheet" href="assets/css/login.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LSPU Online Login</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: url('https://media.istockphoto.com/id/182727706/photo/united-states-capitol-with-senate-chamber-under-blue-sky.jpg?s=1024x1024&w=is&k=20&c=So5rQmTir6AAingoTZrC40gC8k6O2GeDe0bEaOBmFII=') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-container {
+      display: flex;
+      width: 1000px;
+      max-width: 3000px;
+      height: 500px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    .login-left {
+      flex: 1;
+      background: linear-gradient(to bottom right, #258B8C, #2EAEAF);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .login-left img {
+      width: 200px;
+      margin-bottom: 20px;
+    }
+    .login-left h4 {
+      font-weight: bold;
+    }
+    .social-icons a {
+      margin: 0 5px;
+      color: white;
+      font-size: 24px;
+    }
+    .login-right {
+      flex: 1;
+      background: #1c1c1c;
+      color: white;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .login-right h3 {
+      margin-bottom: 20px;
+    }
+    .form-control {
+      background: #2c2c2c;
+      border: none;
+      color: white;
+    }
+    .form-control:focus {
+      background: #2c2c2c;
+      color: white;
+      box-shadow: none;
+      border: 1px solid #DFF6F7;
+    }
+    .btn-login {
+      background: #687EB1;
+      border: none;
+      width: 100%;
+      padding: 10px;
+      font-weight: bold;
+      border-radius: 8px;
+    }
+    .btn-login:hover {
+      background: #DFF6F7;
+      color: #1c1c1c;
+    }
+    .forgot-link {
+      font-size: 14px;
+      text-align: right;
+      margin-top: 10px;
+      color: #aaa;
+      display: block;
+    }
+  </style>
 </head>
-
 <body>
-
-    <div class="container">
-        <img src="assets/image/book.png" alt="Barangay Logo">
-        <h2>Barangay Sampiruhan<br>E- Permit System</h2>
-        <form action="include/login_auth.php" method="POST" id="loginForm">
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Log In</button>
-            <a href="#" class="link">Forgot Password</a>
-            <button onclick="window.location.href='registration.php'; return false;">Create Account</button>
+    <form action="include/login_auth.php" method="POST" id="loginForm">
+    <div class="login-container">
+        <!-- Left Side -->
+        <div class="login-left text-center">
+        <img src="https://media.istockphoto.com/id/2200859447/photo/department-of-homeland-security.jpg?s=2048x2048&w=is&k=20&c=M5TYbgmJai3qJSZfnYqlBYmIt1zP3vE9BGAE2jhBxyw=" alt="Logo">
+        <h4>Welcome to<br>Barangay Sampurian</h4>
+        <div class="social-icons mt-4">
+        </div>
+        </div>
+        <!-- Right Side -->
+        <div class="login-right">
+        <h1 class="fw-bold">Barangay <span class="text-info">Sampurian</span></h1>
+        <form>
+            <div class="mb-3">
+            <input type="text" class="form-control" placeholder="email" name="email" required>
+            </div>
+            <div class="mb-3">
+            <input type="password" class="form-control" placeholder="password" name="password" required>
+            </div>
+            <a href="registration.php" class="forgot-link">create account</a>
+            <button type="submit" class="btn btn-login mt-3">Login</button>
         </form>
+        </div>
     </div>
 
+    <!-- Bootstrap JS + Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    </form>
 </body>
-
 </html>

@@ -73,8 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Create notification
         $message = "Your business permit application (ID: $permit_id) has been submitted successfully.";
-        $notification_sql = "INSERT INTO notification (user_id, request_id, message) VALUES (?, ?, ?)";
-        $pdo->prepare($notification_sql)->execute([$user_id, $permit_id, $message]);
 
         $_SESSION['success_message'] = "Business permit application submitted successfully! Your permit ID is: $permit_id";
         header("Location: ../dashboard.php");

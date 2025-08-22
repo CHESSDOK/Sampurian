@@ -13,6 +13,38 @@ $user_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT f_name, l_name, picture FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// make sure cleared_notifs exists
+if (!isset($_SESSION['cleared_notifs'])) {
+    $_SESSION['cleared_notifs'] = [];
+}
+
+// fetch all notifications (Approved/Declined)
+$sql = "
+    SELECT id, 'barangay_clearance' AS src, status FROM barangay_clearance WHERE user_id = ? AND status IN ('Approved','Declined')
+    UNION ALL
+    SELECT id, 'business_permit', status FROM business_permit WHERE user_id = ? AND status IN ('Approved','Declined')
+    UNION ALL
+    SELECT id, 'business_permit_renewal', status FROM business_permit_renewal WHERE user_id = ? AND status IN ('Approved','Declined')
+    UNION ALL
+    SELECT id, 'indigency', status FROM indigency WHERE user_id = ? AND status IN ('Approved','Declined')
+    UNION ALL
+    SELECT id, 'animal_bite_reports', status FROM animal_bite_reports WHERE user_id = ? AND status IN ('Approved','Declined')
+";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$user_id,$user_id,$user_id,$user_id,$user_id]);
+
+$rows = [];
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $notifKey = $row['src'].'_'.$row['id'];
+    if (!in_array($notifKey, $_SESSION['cleared_notifs'])) {
+        $rows[] = $row;
+    }
+}
+
+// ✅ This is where you set notifCount
+$notifCount = count($rows);
 ?>
 
 <!DOCTYPE html>
@@ -113,7 +145,12 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             <!-- Right side: Icons and Profile -->
             <div class="d-flex align-items-center">
-                <a href="notifications.php" title="Notifications"><i class="fas fa-bell"></i></a>
+                <a href="notif.php" title="Notifications" class="position-relative">
+                    <i class="fas fa-bell"></i>
+                    <?php if ($notifCount > 0): ?>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                    <?php endif; ?>
+                </a>
                 <a href="contact.php" title="Contact Us"><i class="fas fa-phone"></i></a>
 
                 <div class="dropdown">

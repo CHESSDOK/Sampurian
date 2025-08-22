@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 12, 2025 at 03:17 PM
+-- Generation Time: Aug 16, 2025 at 12:50 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -284,7 +284,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `email`, `user_password`, `f_name`, `m_name`, `l_name`, `birthday`, `contact`, `marriage_status`, `gender`, `address`, `picture`) VALUES
 (1, 'batbattmercado@gmail.com', NULL, 'Igor Knapp', 'Hayley Holmes', 'Hoopers', '2008-07-27', 'Irure alias tempora', 'Married', 'Female', 'In quaerat nihil rep', 'uploads/1752672752_474043763_2836446049861869_694324624727446876_n.jpg'),
 (2, 'mercadomarklawrence55@gmail.com', '$2y$10$0N.28NWLibhODYD2IojIweU4S3b1tDZ8R483J7Dv92esDt9AiHD72', 'Phelan Woodward', 'Althea Rice', 'Claire Pollard', '2014-08-05', 'Nemo rerum quisquam', 'Married', 'Female', 'Sit voluptatem Lab', 'uploads/1752987261_400859154_1087458925605069_2717601233466235752_n.jpg'),
-(3, 'azure@gmail.com', '$2y$10$/Bgm/xWZO7mYATRHzXoLzuzdjVru4t3iqB5fypFP5SbN7NwhXXB6i', 'Skyler Brooks', 'Jameson Joseph', 'Rudyard Shepherd', '2019-12-26', 'Totam nostrud natus', 'Single', 'Female', 'Cumque rerum accusam', 'uploads/1754998393_susan-q-yin-2JIvboGLeho-unsplash.jpg');
+(3, 'azure@gmail.com', '$2y$10$/Bgm/xWZO7mYATRHzXoLzuzdjVru4t3iqB5fypFP5SbN7NwhXXB6i', 'Skyler Brooks', 'Jameson Joseph', 'Rudyard Shepherd', '2019-12-26', 'Totam nostrud natus', 'Single', 'Female', 'Cumque rerum accusam', 'uploads/1754998393_susan-q-yin-2JIvboGLeho-unsplash.jpg'),
+(4, 'marklawrencemercado8@gmail.com', '$2y$10$aVJyu92UqvQzWSoqn9YvBeLVAEe2Cf6lRsKpUyPqUfxssIeOAdoZS', 'Shafira Blackwell', 'Olivia Hyde', 'Holly Woodward', '1994-06-05', 'Nisi eum eos qui eni', 'Married', 'Female', 'Molestias velit labo', 'uploads/1755329374_400859154_1087458925605069_2717601233466235752_n.jpg');
 
 --
 -- Indexes for dumped tables
@@ -401,7 +402,7 @@ ALTER TABLE `notification`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

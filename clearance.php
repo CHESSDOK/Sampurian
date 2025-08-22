@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: index.php");
     exit();
 }
 
@@ -10,7 +10,7 @@ require_once 'include/config.php';
 $user_id = $_SESSION['user_id'];
 
 // Fetch user profile data
-$stmt = $pdo->prepare("SELECT f_name, l_name, m_name, birthday, marriage_status, gender, address, contact, email, picture FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
@@ -22,43 +22,32 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
     <title>Barangay Clearance</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+<style>
         body {
             background-color: #eaf4f4;
             font-family: Arial, sans-serif;
         }
 
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 10px 20px;
-            border-bottom: 2px solid #ccc;
+        .navbar {
+        background-color: #20a4b9;
         }
-
-        .top-bar a,
-        .top-bar i {
-            font-size: 20px;
-            margin-left: 20px;
-            color: black;
-            text-decoration: none;
+        .navbar-brand {
+        font-weight: bold;
+        color: white !important;
+        display: flex;
+        align-items: center;
         }
-
-        .dropdown img {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
+        .navbar-brand i {
+        margin-right: 8px;
         }
-
-        .custom-dropdown {
-            width: 220px;
-            padding: 10px 0;
+        .navbar .dropdown-menu {
+        min-width: 150px;
         }
-
-        .custom-dropdown .dropdown-item {
-            width: 100%;
-            padding: 10px 20px;
-            text-align: center;
+        .profile-icon {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: white;
         }
 
         .form-section {
@@ -70,7 +59,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
         }
 
         .form-title {
-            background-color: #0e5f5f;
+            background-color: #258B8C;
             color: white;
             padding: 12px;
             text-align: center;
@@ -103,42 +92,96 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             border-radius: 6px;
             margin-bottom: 20px;
         }
+        .service-card {
+        background: #fff;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        transition: 0.3s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        }
+        .service-card:hover {
+        background: #eaf7f8;
+        text-decoration: none;
+        color: inherit;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container my-5">
-        <!-- Top Bar -->
-        <div class="top-bar d-flex justify-content-between align-items-center px-4 py-2">
-            <div class="d-flex align-items-center">
-                <a href="dashboard.php"><img src="include/uploads/1752672752_474043763_2836446049861869_694324624727446876_n.jpg" alt="Barangay Logo" width="40" height="40" class="rounded-circle me-2"></a>
-                <span class="fw-bold" style="font-size: x-large;">Barangay Sampiruhan</span>
-            </div>
-            <div class="d-flex align-items-center">
-                <a href="notifications.php" title="Notifications"><i class="fas fa-bell"></i></a>
-                <a href="contact.php" title="Contact Us"><i class="fas fa-phone"></i></a>
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg px-3">
+                <a class="navbar-brand" href="#">
+                <a href="dashboard.php"><img src="include/uploads/1752672752_474043763_2836446049861869_694324624727446876_n.jpg" alt="Barangay Logo" width="50" height="50" class="rounded-circle me-2"></a>
+                <h3>BARANGAY SAMPURIAN</h3>
+                </a>
+                <div class="ms-auto dropdown">
+                <img src="include/<?php echo htmlspecialchars($user['picture']); ?>" 
+                    alt="Profile" 
+                    width="40" 
+                    height="40" 
+                    class="rounded-circle dropdown-toggle" 
+                    data-bs-toggle="dropdown" 
+                    style="cursor:pointer; object-fit:cover;">
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="applicant_profile.php">Profile</a></li>
+                    <li><a class="dropdown-item" href="logout.php">Logout</a></li>
+                </ul>
+                </div>
+            </nav>
 
-                <div class="dropdown">
-                    <a href="#" class="d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <?php if (!empty($user['picture'])): ?>
-                            <img src="include/<?php echo htmlspecialchars($user['picture']); ?>" alt="Profile Image" class="rounded-circle" width="40" height="40">
-                        <?php else: ?>
-                            <img src="assets/image/user-placeholder.png" alt="Profile Picture" class="rounded-circle" width="40" height="40">
-                        <?php endif; ?>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end text-center mt-2 custom-dropdown" aria-labelledby="profileDropdown">
-                        <li><strong><?= htmlspecialchars($user['f_name']) ?></strong></li>
-                        <li><a class="dropdown-item" href="applicant_profile.php">Profile</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
-                    </ul>
+            <!-- Services Section -->
+            <div class="container my-2">
+                <div class="row text-center g-6">
+                    
+                    <!-- Business Permit with Dropdown -->
+                    <div class="col-md-3">
+                        <div class="dropdown service-card">
+                        <i class="bi bi-file-earmark-text" style="font-size:2rem;"></i>
+                        <h6 class="mt-2 dropdown-toggle" data-bs-toggle="dropdown">Business Permit</h6>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="barangay_permit.php">Request</a></li>
+                            <li><a class="dropdown-item" href="renew_permit.php">Renew</a></li>
+                        </ul>
+                        </div>
+                    </div>
+                    <!-- Clearance -->
+                    <div class="col-md-2">
+                        <a href="clearance.php" class="service-card">
+                        <i class="bi bi-file-text" style="font-size:2rem;"></i>
+                        <h6 class="mt-2">Clearance</h6>
+                        </a>
+                    </div>
+                    <!-- Indigency -->
+                    <div class="col-md-2">
+                        <a href="indigency.php" class="service-card">
+                        <i class="bi bi-people" style="font-size:2rem;"></i>
+                        <h6 class="mt-2">Indigency</h6>
+                        </a>
+                    </div>
+                    <!-- Bite Report -->
+                    <div class="col-md-2">
+                        <a href="animal_bite.php" class="service-card">
+                        <i class="bi bi-flag" style="font-size:2rem;"></i>
+                        <h6 class="mt-2">Bite Report</h6>
+                        </a>
+                    </div>
+                    <!-- My Request -->
+                    <div class="col-md-3">
+                        <a href="my_requests.php" class="service-card">
+                        <i class="bi bi-journal-text" style="font-size:2rem;"></i>
+                        <h6 class="mt-2">My Request</h6>
+                        </a>
+                    </div>
+
                 </div>
             </div>
-        </div>
-
-        <!-- Business Permit Form -->
+             
+    <div class="container my-5">
+      <!-- Business Permit Form -->
         <form action="include/submit_clearance.php" method="POST" enctype="multipart/form-data" class="form-section">
             <?php if (isset($_SESSION['error_message'])): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">

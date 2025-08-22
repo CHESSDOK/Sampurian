@@ -94,8 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Create notification
         $message = "Your animal bite report (ID: $report_id) has been submitted successfully.";
-        $notification_sql = "INSERT INTO notification (user_id, request_id, message) VALUES (?, ?, ?)";
-        $pdo->prepare($notification_sql)->execute([$user_id, $report_id, $message]);
+
 
         $_SESSION['success_message'] = "Animal bite report submitted successfully! Your report ID is: $report_id";
         header("Location: ../dashboard.php");

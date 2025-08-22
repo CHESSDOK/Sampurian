@@ -62,7 +62,22 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </table>
     </div>
 </div>
-
+<div class="modal fade" id="declineModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5>Decline Request</h5></div>
+      <div class="modal-body">
+        <textarea id="declineComment" class="form-control" placeholder="Enter reason"></textarea>
+        <input type="hidden" id="declineId">
+        <input type="hidden" id="declineType">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="confirmDecline" class="btn btn-danger">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
 <?php include 'admin_footer.php'; ?>
 
 <script>
