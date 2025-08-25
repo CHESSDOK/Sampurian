@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LSPU Online Login</title>
+  <title>Sampiruhan Online Login</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
@@ -60,7 +60,7 @@
       margin-bottom: 20px;
     }
     .form-control {
-      background: #2c2c2c;
+      background: #ffffffff;
       border: none;
       color: white;
     }
@@ -96,15 +96,15 @@
     <div class="login-container">
         <!-- Left Side -->
         <div class="login-left text-center">
-        <img src="https://media.istockphoto.com/id/2200859447/photo/department-of-homeland-security.jpg?s=2048x2048&w=is&k=20&c=M5TYbgmJai3qJSZfnYqlBYmIt1zP3vE9BGAE2jhBxyw=" alt="Logo">
-        <h4>Welcome to<br>Barangay Sampurian</h4>
+        <img src="assets/image/sam.png" alt="Logo">
+        <h4>Welcome to<br>Barangay Sampiruhan</h4>
         <div class="social-icons mt-4">
         </div>
         </div>
         <!-- Right Side -->
         <div class="login-right">
-        <h1 class="fw-bold">Barangay <span class="text-info">Sampurian</span></h1>
-        <form>
+        <h1 class="fw-bold">Barangay <span class="text-info">Sampiruhan</span></h1>
+
             <div class="mb-3">
             <input type="text" class="form-control" placeholder="email" name="email" required>
             </div>
@@ -113,7 +113,6 @@
             </div>
             <a href="registration.php" class="forgot-link">create account</a>
             <button type="submit" class="btn btn-login mt-3">Login</button>
-        </form>
         </div>
     </div>
 

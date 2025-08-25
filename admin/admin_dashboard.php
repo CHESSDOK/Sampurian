@@ -19,21 +19,23 @@ foreach ($tables as $label => $t) {
     $counts[$label] = (int)$stmt->fetchColumn();
 }
 
-// requests per year (last 5 years) aggregated across tables (approx)
-$years = [];
+// =============================
+// Requests per month (current year)
+// =============================
 $currentYear = (int)date('Y');
-for ($i=4;$i>=0;$i--) $years[] = $currentYear - $i;
-
-$yearly = [];
-foreach ($years as $y) $yearly[$y] = 0;
+$monthly = array_fill(1, 12, 0); // months 1–12 initialized to 0
 
 foreach ($tables as $label => $t) {
-    // try to use created_at if exists
     try {
-        $stmt = $pdo->query("SELECT YEAR(created_at) as y, COUNT(*) as c FROM $t WHERE created_at IS NOT NULL GROUP BY YEAR(created_at)");
+        $stmt = $pdo->query("
+            SELECT MONTH(created_at) as m, COUNT(*) as c 
+            FROM $t 
+            WHERE created_at IS NOT NULL AND YEAR(created_at) = $currentYear 
+            GROUP BY MONTH(created_at)
+        ");
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-            $yr = (int)$r['y'];
-            if (isset($yearly[$yr])) $yearly[$yr] += (int)$r['c'];
+            $m = (int)$r['m'];
+            $monthly[$m] += (int)$r['c'];
         }
     } catch (Exception $e) {
         // ignore tables without created_at
@@ -46,8 +48,8 @@ foreach ($tables as $label => $t) {
         <div class="card card-stat p-3">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="small-muted"><?= htmlspecialchars($label) ?></div>
-                    <h4 class="mt-2"><?= intval($c) ?></h4>
+                    <div class="small-muted" style="color: black;"><?= htmlspecialchars($label) ?></div>
+                    <h4 class="mt-2 "><?= intval($c) ?></h4>
                 </div>
                 <div><i class="fa fa-file-invoice fa-2x"></i></div>
             </div>
@@ -56,12 +58,75 @@ foreach ($tables as $label => $t) {
     <?php endforeach; ?>
 </div>
 
-<div class="card p-3 mb-4">
-    <h5>Requests in last 5 years</h5>
-    <canvas id="yearChart" style="height:220px"></canvas>
+<!-- Graph Container -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Requests in <?= $currentYear ?> (per month)</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="position: relative; height:400px; width:100%">
+            <canvas id="monthChart"></canvas>
+        </div>
+    </div>
 </div>
 
 <?php include 'admin_footer.php'; ?>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById('monthChart').getContext('2d');
 
+    // Destroy old chart instance if it exists
+    if (window.monthChartInstance) {
+        window.monthChartInstance.destroy();
+    }
 
+    window.monthChartInstance = new Chart(ctx, {
+        type: 'line', // change to 'bar' if you prefer bars
+        data: {
+            labels: [
+                "Jan","Feb","Mar","Apr","May","Jun",
+                "Jul","Aug","Sep","Oct","Nov","Dec"
+            ],
+            datasets: [{
+                label: 'Requests in <?= $currentYear ?>',
+                data: <?= json_encode(array_values($monthly)) ?>,
+                fill: true,
+                backgroundColor: 'rgba(54, 162, 235, 0.3)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                tension: 0.2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: "#333"
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Requests'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>

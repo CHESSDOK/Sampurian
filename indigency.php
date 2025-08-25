@@ -13,6 +13,13 @@ $user_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$age = null;
+if (!empty($user['birthday'])) {
+    $birthDate = new DateTime($user['birthday']);
+    $today = new DateTime();
+    $age = $today->diff($birthDate)->y; // difference in years
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -209,7 +216,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Age</label>
-                    <input type="date" class="form-control" name="agequired value="">
+                    <input type="text" class="form-control" name="age" value="<?= $age !== null ? htmlspecialchars($age) : '' ?>">
                 </div>
                 <div class=" col-md-6">
                     <label class="form-label">Gender</label>

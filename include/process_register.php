@@ -1,4 +1,13 @@
 <?php
+// Set Philippines timezone
+date_default_timezone_set('Asia/Manila');
+
+// Include Composer's autoloader
+require '../vendor/autoload.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 $db = new mysqli('localhost', 'root', '', 'sampurihan');
 
 if ($db->connect_error) {
@@ -30,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $check->store_result();
 
     if ($check->num_rows > 0) {
-        echo "<script>alert('Email already exists.'); window.history.back();</script>";
+        echo json_encode(['success' => false, 'message' => 'Email already exists.']);
         exit;
     }
 
@@ -45,13 +54,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $picture_name = $target_file;
     }
 
-    $stmt = $db->prepare("INSERT INTO users (email, user_password, f_name, m_name, l_name, birthday, contact, marriage_status, gender, address, picture) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssssss", $email, $hashed_password, $f_name, $m_name, $l_name, $birthday, $contact, $marriage_status, $gender, $address, $picture_name);
+    // Generate OTP
+    $otp_code = rand(100000, 999999);
+    $otp_expiry = date("Y-m-d H:i:s", strtotime("+5 minutes"));
+    
+    // Insert user with OTP (not verified yet)
+    $stmt = $db->prepare("INSERT INTO users (email, user_password, f_name, m_name, l_name, birthday, contact, marriage_status, gender, address, picture, otp_code, otp_expiry) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssssssssss", $email, $hashed_password, $f_name, $m_name, $l_name, $birthday, $contact, $marriage_status, $gender, $address, $picture_name, $otp_code, $otp_expiry);
 
     if ($stmt->execute()) {
-        echo "<script>alert('Account created successfully!'); window.location.href='../index.php';</script>";
+        // Send OTP email using PHPMailer
+        $mail = new PHPMailer(true);
+        
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com'; // Set your SMTP server
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'pesolosbanos4@gmail.com'; // SMTP username
+            $mail->Password   = 'rooy awbq emme qqyt'; // SMTP password (use app password for Gmail)
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+            
+            // Recipients
+            $mail->setFrom('noreply@yourdomain.com', 'SAMPURIAN');
+            $mail->addAddress($email);
+            
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = 'Your OTP Code for Registration';
+            $mail->Body    = 'Your OTP code is: <b>' . $otp_code . '</b><br>This code will expire in 5 minutes.';
+            $mail->AltBody = 'Your OTP code is: ' . $otp_code . '. This code will expire in 5 minutes.';
+            
+            $mail->send();
+            echo json_encode(['success' => true, 'message' => 'OTP sent to your email. Please check your inbox.']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'OTP could not be sent. Mailer Error: ' . $mail->ErrorInfo]);
+        }
     } else {
-        echo "Error: " . $stmt->error;
+        echo json_encode(['success' => false, 'message' => 'Error: ' . $stmt->error]);
     }
 }
+?>

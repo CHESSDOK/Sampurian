@@ -21,34 +21,130 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Admin Login</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-body { background: #f4f7fb; }
-.login-box { max-width:420px; margin:8vh auto; background:#fff; padding:28px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sampiruhan Online Login</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: url('https://media.istockphoto.com/id/182727706/photo/united-states-capitol-with-senate-chamber-under-blue-sky.jpg?s=1024x1024&w=is&k=20&c=So5rQmTir6AAingoTZrC40gC8k6O2GeDe0bEaOBmFII=') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-container {
+      display: flex;
+      width: 1000px;
+      max-width: 3000px;
+      height: 500px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    .login-left {
+      flex: 1;
+      background: linear-gradient(to bottom right, #258B8C, #2EAEAF);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .login-left img {
+      width: 200px;
+      margin-bottom: 20px;
+    }
+    .login-left h4 {
+      font-weight: bold;
+    }
+    .social-icons a {
+      margin: 0 5px;
+      color: white;
+      font-size: 24px;
+    }
+    .login-right {
+      flex: 1;
+      background: #1c1c1c;
+      color: white;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .login-right h3 {
+      margin-bottom: 20px;
+    }
+    .form-control {
+      background: #ffffffff;
+      border: none;
+      color: white;
+    }
+    .form-control:focus {
+      background: #2c2c2c;
+      color: white;
+      box-shadow: none;
+      border: 1px solid #DFF6F7;
+    }
+    .btn-login {
+      background: #687EB1;
+      border: none;
+      width: 100%;
+      padding: 10px;
+      font-weight: bold;
+      border-radius: 8px;
+    }
+    .btn-login:hover {
+      background: #DFF6F7;
+      color: #1c1c1c;
+    }
+    .forgot-link {
+      font-size: 14px;
+      text-align: right;
+      margin-top: 10px;
+      color: #aaa;
+      display: block;
+    }
+  </style>
 </head>
 <body>
-<div class="login-box">
-    <h4 class="mb-3 text-center">Admin Login</h4>
-    <?php if ($error): ?>
-        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-    <form method="post" novalidate>
-        <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input name="email" type="email" class="form-control" required autofocus>
+    <form method="POST" id="loginForm" novalidate>
+    <div class="login-container">
+        <!-- Left Side -->
+        <div class="login-left text-center">
+        <img src="../assets/image/sam.png" alt="Logo">
+        <h1>Welcome<br>ADMIN</h1>
+        <div class="social-icons mt-4">
         </div>
-        <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input name="password" type="password" class="form-control" required>
         </div>
-        <button class="btn btn-primary w-100">Login</button>
+        <!-- Right Side -->
+        <div class="login-right">
+            <?php if ($error): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
+        <h1 class="fw-bold">Barangay <span class="text-info">Sampiruhan</span></h1>
+
+            <div class="mb-3">
+            <input type="text" class="form-control" placeholder="email" name="email" required>
+            </div>
+            <div class="mb-3">
+            <input type="password" class="form-control" placeholder="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-login mt-3">Login</button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS + Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     </form>
-</div>
 </body>
 </html>
+

@@ -11,14 +11,14 @@ include 'auth.php';
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <style>
-:root{--accent:#0d6efd}
+:root{--accent:#258B8C}
 body{background:#f5f7fb}
 .sidebar{width:240px;position:fixed;top:0;bottom:0;background:var(--accent);color:#fff;padding:22px}
 .sidebar a{color:#fff;display:block;padding:10px;border-radius:6px;text-decoration:none;margin-bottom:6px}
 .sidebar a:hover{background:rgba(255,255,255,0.08)}
 .content{margin-left:260px;padding:24px}
 .card-stat{border-radius:12px;box-shadow:0 6px 18px rgba(13,110,253,0.06)}
-.small-muted{font-size:0.85rem;color:#6c757d}
+.small-muted{font-size:0.85rem;color:#fff}
 .table-wrap{overflow-x:auto}
 </style>
 </head>
