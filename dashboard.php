@@ -19,7 +19,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barangay Sampurian Dashboard</title>
+  <title>Barangay SAMPIRUHAN Dashboard</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
@@ -86,7 +86,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
   <nav class="navbar navbar-expand-lg px-3">
     <a class="navbar-brand" href="#">
       <a href="dashboard.php"><img src="include/uploads/1752672752_474043763_2836446049861869_694324624727446876_n.jpg" alt="Barangay Logo" width="50" height="50" class="rounded-circle me-2"></a>
-    <h3>BARANGAY SAMPURIAN</h3>
+    <h3>BARANGAY SAMPIRUHAN</h3>
     </a>
     <div class="ms-auto dropdown">
       <img src="include/<?php echo htmlspecialchars($user['picture']); ?>" 
@@ -182,7 +182,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
     <div class="container text-center">
       <div class="row">
         <div class="col-md-4">
-          <h6>BARANGAY SAMPURIAN</h6>
+          <h6>BARANGAY SAMPIRUHAN</h6>
           <p>143 Sampiruan Balot Street<br>Hon. Name D. Sampal<br>+63 902-2391-123</p>
         </div>
         <div class="col-md-4">
@@ -193,12 +193,12 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
         </div>
         <div class="col-md-4">
           <h6>Inquiry Form</h6>
-          <form>
-            <input type="text" class="form-control mb-2" placeholder="Name">
-            <input type="email" class="form-control mb-2" placeholder="Email">
-            <input type="text" class="form-control mb-2" placeholder="Contact">
-            <textarea class="form-control mb-2" rows="2" placeholder="Message"></textarea>
-            <button class="btn btn-light btn-sm">Submit</button>
+          <form method="POST" action="include/send_inquiry.php">
+            <input type="text" name="name" class="form-control mb-2" placeholder="Name" required>
+            <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+            <input type="text" name="contact" class="form-control mb-2" placeholder="Contact" required>
+            <textarea name="message" class="form-control mb-2" rows="2" placeholder="Message" required></textarea>
+            <button class="btn btn-light btn-sm" type="submit">Submit</button>
           </form>
         </div>
       </div>

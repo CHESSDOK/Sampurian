@@ -123,7 +123,7 @@ if (!empty($user['birthday'])) {
             <nav class="navbar navbar-expand-lg px-3">
                 <a class="navbar-brand" href="#">
                 <a href="dashboard.php"><img src="include/uploads/1752672752_474043763_2836446049861869_694324624727446876_n.jpg" alt="Barangay Logo" width="50" height="50" class="rounded-circle me-2"></a>
-                <h3>BARANGAY SAMPURIAN</h3>
+                <h3>BARANGAY SAMPIRUHAN</h3>
                 </a>
                 <div class="ms-auto dropdown">
                 <img src="include/<?php echo htmlspecialchars($user['picture']); ?>" 
