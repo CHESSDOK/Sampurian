@@ -1,110 +1,150 @@
-<?php
-// include/submit_business_permit.php
-session_start();
-require_once 'config.php';
+        <?php
+        // include/submit_business_permit.php
+        session_start();
+        require_once 'config.php';
+       // ✅ Load PayMongo SDK
+        require '../vendor/autoload.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
+        use Paymongo\PaymongoClient;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $user_id = $_SESSION['user_id'];
+        // Use your PayMongo secret key (test first)
+        $paymongo = new PaymongoClient("sk_test_RtRn2nPog8rdTZu1Pdw2KoXo");
 
-        // Get user information to create directory
-        $stmt = $pdo->prepare("SELECT f_name, m_name, l_name FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Create directory path
-        $base_dir = "documents/";
-        $user_dir = $user['l_name'] . ", " . $user['f_name'] . " " . $user['m_name'];
-        $upload_dir = $base_dir . $user_dir . "/clearance/";
-
-        // Create directory if it doesn't exist
-        if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
-
-        // Generate unique permit ID
-        $permit_id = "BP-" . date("Ymd") . "-" . strtoupper(bin2hex(random_bytes(6)));
-
-        // File upload handling with error checking
-        $payment_proof = isset($_FILES['payment_proof']) ? uploadFile('payment_proof', $upload_dir, 'Payment_Proof') : '';
-
-        // Get form data
-        $purpose = $_POST['purpose'];
-        $payment_type = $_POST['payment_method'];
-        $gcash_ref_no = isset($_POST['gcash_ref_no']) ? $_POST['gcash_ref_no'] : '';
-
-        // Insert into database
-        $sql = "INSERT INTO indigency (
-            permit_id, nature_of_assistance, payment_proof,
-            user_id, payment_type, gcash_ref_no, created_at
-        ) VALUES (
-            :permit_id, :purpose, :payment_proof,
-            :user_id, :payment_type, :gcash_ref_no, NOW()
-        )";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ':permit_id' => $permit_id,
-            ':purpose' => $purpose,
-            ':payment_proof' => $payment_proof,
-            ':user_id' => $user_id,
-            ':payment_type' => $payment_type,
-            ':gcash_ref_no' => $gcash_ref_no
-        ]);
-
-        // Create notification
-        $message = "Your barangay indigency application (ID: $permit_id) has been submitted successfully.";
-        $_SESSION['success_message'] = "barangay indigency application submitted successfully! Your permit ID is: $permit_id";
-        header("Location: ../dashboard.php");
-        exit();
-    } catch (PDOException $e) {
-        $_SESSION['error_message'] = "Database error: " . $e->getMessage();
-        header("Location: ../indigency.php");
-        exit();
-    }
-}
-
-function uploadFile($field_name, $upload_dir, $file_prefix)
-{
-    if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {
-        if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others' && $field_name !== 'payment_proof') {
-            $_SESSION['error_message'] = "Required file is missing: " . $field_name;
-            header("Location: ../indigency.php");
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: login.php");
             exit();
         }
-        return '';
-    }
 
-    $file = $_FILES[$field_name];
-    $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $file_name = $file_prefix . "_" . time() . "." . $file_ext;
-    $file_path = $upload_dir . $file_name;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $user_id = $_SESSION['user_id'];
+                $stmt = $pdo->prepare("SELECT f_name, m_name, l_name FROM users WHERE id = ?");
+                $stmt->execute([$user_id]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Check file size (max 5MB)
-    if ($file['size'] > 5000000) {
-        $_SESSION['error_message'] = "File size too large. Maximum size is 5MB.";
-        header("Location: ../indigency.php");
-        exit();
-    }
+                $permit_id = "IND-" . date("Ymd") . "-" . strtoupper(bin2hex(random_bytes(4)));
+                $purpose = $_POST['purpose'];
+                $payment_type = $_POST['payment_method'];
 
-    // Allow only certain file types
-    $allowed_types = ['pdf', 'jpg', 'jpeg', 'png'];
-    if (!in_array(strtolower($file_ext), $allowed_types)) {
-        $_SESSION['error_message'] = "Only PDF, JPG, JPEG, PNG files are allowed.";
-        header("Location: ../indigency.php");
-        exit();
-    }
+            if ($payment_type === "Online") {
+                // ✅ Create PayMongo Checkout Session via API
+                $ch = curl_init('https://api.paymongo.com/v1/checkout_sessions');
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST           => true,
+                    CURLOPT_HTTPHEADER     => [
+                        'Authorization: Basic ' . base64_encode('sk_test_RtRn2nPog8rdTZu1Pdw2KoXo:'), // secret key
+                        'Content-Type: application/json'
+                    ],
+                    CURLOPT_POSTFIELDS => json_encode([
+                        'data' => [
+                            'attributes' => [
+                                'line_items' => [[
+                                    'name'     => 'Barangay Business Permit',
+                                    'quantity' => 1,
+                                    'amount'   => 50000, // ₱500.00 in centavos
+                                    'currency' => 'PHP'
+                                ]],
+                                'payment_method_types' => ['gcash', 'paymaya', 'grab_pay', 'card'],
+                                'success_url' => "http://localhost/project/include/payment_success.php?permit_id=$permit_id",
+                                'cancel_url'  => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id"
+                            ]
+                        ]
+                    ]),
+                ]);
 
-    if (move_uploaded_file($file['tmp_name'], $file_path)) {
-        return $file_path;
-    } else {
-        $_SESSION['error_message'] = "Error uploading file.";
-        header("Location: ../indigency.php");
-        exit();
-    }
-}
+                $response = curl_exec($ch);
+                curl_close($ch);
+
+                $payload = json_decode($response, true);
+
+                if (isset($payload['data']['attributes']['checkout_url'])) {
+                    $checkoutUrl = $payload['data']['attributes']['checkout_url'];
+
+                    // Save as pending
+                    $sql = "INSERT INTO indigency (
+                        permit_id, nature_of_assistance, user_id, payment_type, created_at, status
+                    ) VALUES (
+                        :permit_id, :purpose, :user_id, :payment_type, NOW(), 'pending'
+                    )";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([
+                        ':permit_id'    => $permit_id,
+                        ':purpose'      => $purpose,
+                        ':user_id'      => $user_id,
+                        ':payment_type' => $payment_type
+                    ]);
+
+                    // Redirect to PayMongo Checkout
+                    header("Location: " . $checkoutUrl);
+                    exit;
+                } else {
+                    $_SESSION['error_message'] = "❌ Failed to create checkout session.";
+                    header("Location: ../business_permit.php");
+                    exit;
+                }
+            } else {
+                    // ✅ Cash payment (save request directly)
+                    $sql = "INSERT INTO indigency (
+                        permit_id, nature_of_assistance, user_id, payment_type, created_at, status
+                    ) VALUES (
+                        :permit_id, :purpose, :user_id, :payment_type, NOW(), 'unpaid'
+                    )";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([
+                        ':permit_id' => $permit_id,
+                        ':purpose'   => $purpose,
+                        ':user_id'   => $user_id,
+                        ':payment_type' => $payment_type
+                    ]);
+
+                    $_SESSION['success_message'] = "Request submitted, pay at Barangay Hall.";
+                    header("Location: ../dashboard.php");
+                    exit;
+                }
+            } catch (Exception $e) {
+                $_SESSION['error_message'] = "Error: " . $e->getMessage();
+                header("Location: ../indigency.php");
+                exit;
+            }
+        }
+
+        function uploadFile($field_name, $upload_dir, $file_prefix)
+        {
+            if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {
+                if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others' && $field_name !== 'payment_proof') {
+                    $_SESSION['error_message'] = "Required file is missing: " . $field_name;
+                    header("Location: ../indigency.php");
+                    exit();
+                }
+                return '';
+            }
+
+            $file = $_FILES[$field_name];
+            $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $file_name = $file_prefix . "_" . time() . "." . $file_ext;
+            $file_path = $upload_dir . $file_name;
+
+            // Check file size (max 5MB)
+            if ($file['size'] > 5000000) {
+                $_SESSION['error_message'] = "File size too large. Maximum size is 5MB.";
+                header("Location: ../indigency.php");
+                exit();
+            }
+
+            // Allow only certain file types
+            $allowed_types = ['pdf', 'jpg', 'jpeg', 'png'];
+            if (!in_array(strtolower($file_ext), $allowed_types)) {
+                $_SESSION['error_message'] = "Only PDF, JPG, JPEG, PNG files are allowed.";
+                header("Location: ../indigency.php");
+                exit();
+            }
+
+            if (move_uploaded_file($file['tmp_name'], $file_path)) {
+                return $file_path;
+            } else {
+                $_SESSION['error_message'] = "Error uploading file.";
+                header("Location: ../indigency.php");
+                exit();
+            }
+        }
