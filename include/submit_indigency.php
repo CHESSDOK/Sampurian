@@ -74,12 +74,12 @@
                         ':user_id'      => $user_id,
                         ':payment_type' => $payment_type
                     ]);
-
                     // Redirect to PayMongo Checkout
                     header("Location: " . $checkoutUrl);
                     exit;
                 } else {
                     $_SESSION['error_message'] = "❌ Failed to create checkout session.";
+
                     header("Location: ../business_permit.php");
                     exit;
                 }

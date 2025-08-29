@@ -1,5 +1,5 @@
 <?php
-$page_title = "Animal Bite Investigation Reports";
+$page_title = "Animal Bite Reports";
 include 'admin_header.php';
 include '../include/config.php';
 
@@ -18,10 +18,9 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <th>Permit ID</th>
                 <th>Requester</th>
                 <th>Address</th>
-                <th>Date Bitten</th>
-                <th>Animal</th>
-                <th>Pet Color / Marks</th>
-                <th>Owner</th>
+                <th>Victim Details</th>
+                <th>Bite Details</th>
+                <th>Animal Details</th>
                 <th>Payment</th>
                 <th>Status</th>
                 <th>Requested On</th>
@@ -32,17 +31,32 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php foreach($rows as $r): ?>
             <tr id="row-<?= $r['id'] ?>">
                 <td><?= htmlspecialchars($r['permit_id']) ?></td>
-                <td><?= htmlspecialchars(trim($r['l_name'].', '.$r['f_name'].', '.$r['m_name'])) ?></td>
+                <td><?= htmlspecialchars(trim($r['f_name'].' '.$r['m_name'].' '.$r['l_name'])) ?></td>
                 <td><?= htmlspecialchars($r['address'] ?? '-') ?></td>
-                <td><?= htmlspecialchars($r['bite_date'] ?? '-') ?></td>
-                <td><?= htmlspecialchars($r['animal_description'] ?? '-') ?></td>
-                <td><?= htmlspecialchars($r['color'] . ' / ' . $r['marks']) ?></td>
-                <td><?= htmlspecialchars($r['owner_name'] ?? '-') ?></td>
+                <td>
+                    <strong>Name:</strong> <?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?><br>
+                    <strong>Age:</strong> <?= htmlspecialchars($r['age']) ?><br>
+                    <strong>Gender:</strong> <?= htmlspecialchars($r['gender']) ?>
+                </td>
+                <td>
+                    <strong>Location:</strong> <?= htmlspecialchars($r['bite_location']) ?><br>
+                    <strong>Body Part:</strong> <?= htmlspecialchars($r['body_part']) ?><br>
+                    <strong>Date:</strong> <?= htmlspecialchars($r['bite_date']) ?>
+                </td>
+                <td>
+                    <strong>Description:</strong> <?= htmlspecialchars($r['animal_description']) ?><br>
+                    <strong>Color:</strong> <?= htmlspecialchars($r['color']) ?><br>
+                    <strong>Condition:</strong> <?= htmlspecialchars($r['animal_condition']) ?>
+                </td>
                 <td>
                     <?= htmlspecialchars($r['payment_method'] ?? '-') ?>
                     <?php if (!empty($r['gcash_ref_no'])): ?>
-                        <div class="small-muted">Ref#: <?= htmlspecialchars($r['gcash_ref_no']) ?></div>
-                        <a href="<?= htmlspecialchars($r['payment_proof']) ?>" target="_blank">Proof</a>
+                        <div>Ref#: <?= htmlspecialchars($r['gcash_ref_no']) ?></div>
+                        <?php if (!empty($r['payment_proof'])): ?>
+                            <a href="<?= htmlspecialchars($r['payment_proof']) ?>" target="_blank">Proof</a>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        -
                     <?php endif; ?>
                 </td>
                 <td>
@@ -78,22 +92,100 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
   </div>
 </div>
+
+<!-- Toast Notification -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div id="statusToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Notification</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
 <?php include 'admin_footer.php'; ?>
 
 <script>
 $(function(){
+    // Function to show toast notification
+    function showToast(message, type = 'success') {
+        $('#toastMessage').text(message);
+        $('#statusToast').removeClass('bg-success bg-danger').addClass('bg-' + type);
+        var toast = new bootstrap.Toast(document.getElementById('statusToast'));
+        toast.show();
+    }
+
     $('.approveBtn').on('click', function(){
-        $.post('update_status.php', { id: $(this).data('id'), status:'Approved', type: $(this).data('type') }, function(){ location.reload(); });
+        var button = $(this);
+        $.post('update_status.php', { 
+            id: button.data('id'), 
+            status:'Approved', 
+            type: button.data('type') 
+        }, function(response) {
+            if (response === "OK") {
+                showToast('Animal bite report approved successfully');
+                // Update the UI without full page reload
+                var row = $('#row-' + button.data('id'));
+                row.find('.badge')
+                    .removeClass('bg-secondary bg-danger')
+                    .addClass('bg-success')
+                    .text('Approved');
+                
+                // Disable buttons after action
+                button.prop('disabled', true);
+                row.find('.declineBtn').prop('disabled', true);
+            } else {
+                showToast('Error: ' + response, 'danger');
+            }
+        }).fail(function() {
+            showToast('Error approving animal bite report', 'danger');
+        });
     });
 
     $('.declineBtn').on('click', function(){
         $('#declineId').val($(this).data('id'));
         $('#declineType').val($(this).data('type'));
+        $('#declineComment').val(''); // Clear previous comment
         $('#declineModal').modal('show');
     });
 
     $('#confirmDecline').on('click', function(){
-        $.post('update_status.php', { id: $('#declineId').val(), status:'Declined', comment: $('#declineComment').val(), type: $('#declineType').val() }, function(){ location.reload(); });
+        var declineId = $('#declineId').val();
+        var declineType = $('#declineType').val();
+        var comment = $('#declineComment').val();
+        
+        $.post('update_status.php', { 
+            id: declineId, 
+            status:'Declined', 
+            comment: comment, 
+            type: declineType 
+        }, function(response) {
+            if (response === "OK") {
+                $('#declineModal').modal('hide');
+                showToast('Animal bite report declined successfully');
+                
+                // Update the UI without full page reload
+                var row = $('#row-' + declineId);
+                row.find('.badge')
+                    .removeClass('bg-secondary bg-success')
+                    .addClass('bg-danger')
+                    .text('Declined');
+                
+                // Add comment if provided
+                if (comment) {
+                    row.find('.small-muted').remove(); // Remove existing comment if any
+                    row.find('.badge').after('<div class="small-muted">' + comment + '</div>');
+                }
+                
+                // Disable buttons after action
+                row.find('.approveBtn, .declineBtn').prop('disabled', true);
+            } else {
+                showToast('Error: ' + response, 'danger');
+            }
+        }).fail(function() {
+            showToast('Error declining animal bite report', 'danger');
+        });
     });
 });
 </script>

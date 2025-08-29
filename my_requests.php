@@ -7,6 +7,10 @@ $stmt = $pdo->prepare("SELECT f_name, l_name, m_name, birthday, marriage_status,
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Mark notifications as read when user visits this page
+$update_stmt = $pdo->prepare("UPDATE notification SET is_read = 1 WHERE user_id = ?");
+$update_stmt->execute([$user_id]);
+
 $permits = [
     'New Barangay Permit' => 'barangay_clearance',
     'Business Permit' => 'business_permit',
@@ -33,6 +37,11 @@ foreach ($permits as $label => $table) {
         ];
     }
 }
+
+// Check for unread notifications (should be 0 after the update)
+$notification_stmt = $pdo->prepare("SELECT COUNT(*) as unread_count FROM notification WHERE user_id = ? AND is_read = 0");
+$notification_stmt->execute([$user_id]);
+$notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'];
 ?>
 
 <!DOCTYPE html>
@@ -118,11 +127,35 @@ foreach ($permits as $label => $table) {
         text-decoration: none;
         color: inherit;
         display: block;
+        position: relative;
         }
         .service-card:hover {
         background: #eaf7f8;
         text-decoration: none;
         color: inherit;
+        }
+        
+        /* Notification badge styles */
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -185,11 +218,14 @@ foreach ($permits as $label => $table) {
                         <h6 class="mt-2">Bite Report</h6>
                         </a>
                     </div>
-                    <!-- My Request -->
+                    <!-- My Request with Notification Badge -->
                     <div class="col-md-3">
-                        <a href="my_requests.php" class="service-card">
+                        <a href="my_requests.php" class="service-card position-relative">
                         <i class="bi bi-journal-text" style="font-size:2rem;"></i>
                         <h6 class="mt-2">My Request</h6>
+                        <?php if ($notification_count > 0): ?>
+                            <span class="notification-badge"><?php echo $notification_count; ?></span>
+                        <?php endif; ?>
                         </a>
                     </div>
 

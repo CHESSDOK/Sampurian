@@ -82,22 +82,100 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
   </div>
 </div>
+
+<!-- Toast Notification -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div id="statusToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Notification</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
 <?php include 'admin_footer.php'; ?>
 
 <script>
 $(function(){
+    // Function to show toast notification
+    function showToast(message, type = 'success') {
+        $('#toastMessage').text(message);
+        $('#statusToast').removeClass('bg-success bg-danger').addClass('bg-' + type);
+        var toast = new bootstrap.Toast(document.getElementById('statusToast'));
+        toast.show();
+    }
+
     $('.approveBtn').on('click', function(){
-        $.post('update_status.php', { id: $(this).data('id'), status:'Approved', type: $(this).data('type') }, function(){ location.reload(); });
+        var button = $(this);
+        $.post('update_status.php', { 
+            id: button.data('id'), 
+            status:'Approved', 
+            type: button.data('type') 
+        }, function(response) {
+            if (response === "OK") {
+                showToast('Barangay clearance request approved successfully');
+                // Update the UI without full page reload
+                var row = $('#row-' + button.data('id'));
+                row.find('.badge')
+                    .removeClass('bg-secondary bg-danger')
+                    .addClass('bg-success')
+                    .text('Approved');
+                
+                // Disable buttons after action
+                button.prop('disabled', true);
+                row.find('.declineBtn').prop('disabled', true);
+            } else {
+                showToast('Error: ' + response, 'danger');
+            }
+        }).fail(function() {
+            showToast('Error approving barangay clearance request', 'danger');
+        });
     });
 
     $('.declineBtn').on('click', function(){
         $('#declineId').val($(this).data('id'));
         $('#declineType').val($(this).data('type'));
+        $('#declineComment').val(''); // Clear previous comment
         $('#declineModal').modal('show');
     });
 
     $('#confirmDecline').on('click', function(){
-        $.post('update_status.php', { id: $('#declineId').val(), status:'Declined', comment: $('#declineComment').val(), type: $('#declineType').val() }, function(){ location.reload(); });
+        var declineId = $('#declineId').val();
+        var declineType = $('#declineType').val();
+        var comment = $('#declineComment').val();
+        
+        $.post('update_status.php', { 
+            id: declineId, 
+            status:'Declined', 
+            comment: comment, 
+            type: declineType 
+        }, function(response) {
+            if (response === "OK") {
+                $('#declineModal').modal('hide');
+                showToast('Barangay clearance request declined successfully');
+                
+                // Update the UI without full page reload
+                var row = $('#row-' + declineId);
+                row.find('.badge')
+                    .removeClass('bg-secondary bg-success')
+                    .addClass('bg-danger')
+                    .text('Declined');
+                
+                // Add comment if provided
+                if (comment) {
+                    row.find('.small-muted').remove(); // Remove existing comment if any
+                    row.find('.badge').after('<div class="small-muted">' + comment + '</div>');
+                }
+                
+                // Disable buttons after action
+                row.find('.approveBtn, .declineBtn').prop('disabled', true);
+            } else {
+                showToast('Error: ' + response, 'danger');
+            }
+        }).fail(function() {
+            showToast('Error declining barangay clearance request', 'danger');
+        });
     });
 });
 </script>

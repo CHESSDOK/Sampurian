@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
-require '../vendor/autoload.php'; // make sure Dompdf autoloads
+require '../vendor/autoload.php'; // Dompdf
 
 use Dompdf\Dompdf;
 
@@ -25,10 +25,12 @@ if ($permit_id) {
         $fullName = $transaction['f_name'] . ' ' . $transaction['m_name'] . ' ' . $transaction['l_name'];
         $datePaid = date("F j, Y, g:i a");
 
+        $receiptNumber = "REC-" . strtoupper(bin2hex(random_bytes(3)));
+
         $html = "
         <h2 style='text-align:center;'>Barangay Payment Receipt</h2>
         <hr>
-        <p><strong>Receipt No:</strong> REC-" . strtoupper(bin2hex(random_bytes(3))) . "</p>
+        <p><strong>Receipt No:</strong> {$receiptNumber}</p>
         <p><strong>Permit ID:</strong> {$transaction['permit_id']}</p>
         <p><strong>Name:</strong> {$fullName}</p>
         <p><strong>Purpose:</strong> {$transaction['nature_of_assistance']}</p>
@@ -45,8 +47,23 @@ if ($permit_id) {
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        // ✅ Force download as PDF
-        $dompdf->stream("receipt_$permit_id.pdf", ["Attachment" => true]);
+        // ✅ Save PDF to server (optional: store path in DB)
+        $receiptPath = "../receipts/receipt_{$permit_id}.pdf";
+        file_put_contents($receiptPath, $dompdf->output());
+
+        // ✅ Trigger download for user
+        header('Content-Type: application/pdf');
+        header("Content-Disposition: attachment; filename=receipt_$permit_id.pdf");
+        echo $dompdf->output();
+
+        // ✅ Redirect to dashboard after download
+        echo "
+            <script>
+                setTimeout(function(){
+                    window.location.href = '../dashboard.php';
+                }, 3000);
+            </script>
+        ";
         exit();
     }
 }

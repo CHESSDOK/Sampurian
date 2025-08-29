@@ -13,6 +13,11 @@ $user_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT f_name, l_name, picture FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Check for unread notifications
+$notification_stmt = $pdo->prepare("SELECT COUNT(*) as unread_count FROM notification WHERE user_id = ? AND is_read = 0");
+$notification_stmt->execute([$user_id]);
+$notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,6 +83,28 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
       text-decoration: none;
       margin: 0 10px;
     }
+     /* Notification badge styles */
+    .notification-badge {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -85,7 +112,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg px-3">
     <a class="navbar-brand" href="#">
-      <a href="dashboard.php"><img src="include/uploads/1752672752_474043763_2836446049861869_694324624727446876_n.jpg" alt="Barangay Logo" width="50" height="50" class="rounded-circle me-2"></a>
+      <a href="dashboard.php"><img src="assets/image/sam.png" alt="Barangay Logo" width="50" height="50" class="rounded-circle me-2"></a>
     <h3>BARANGAY SAMPIRUHAN</h3>
     </a>
     <div class="ms-auto dropdown">
@@ -145,11 +172,14 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
           <h6 class="mt-2">Bite Report</h6>
         </a>
       </div>
-      <!-- My Request -->
+      <!-- My Request with Notification Badge -->
       <div class="col-md-3">
-        <a href="my_requests.php" class="service-card">
+        <a href="my_requests.php" class="service-card position-relative">
           <i class="bi bi-journal-text" style="font-size:2rem;"></i>
           <h6 class="mt-2">My Request</h6>
+          <?php if ($notification_count > 0): ?>
+            <span class="notification-badge"><?php echo $notification_count; ?></span>
+          <?php endif; ?>
         </a>
       </div>
     </div>

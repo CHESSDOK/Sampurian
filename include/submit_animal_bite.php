@@ -21,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user_dir = $user['l_name'] . ", " . $user['f_name'] . " " . $user['m_name'];
         $upload_dir = $base_dir . $user_dir . "/animal_bite_reports/";
 
-        // Create directory if it doesn't exist
         if (!file_exists($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }
@@ -36,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $animal_conditions = isset($_POST['condition']) ? $_POST['condition'] : [];
         $animal_conditions_json = json_encode($animal_conditions);
 
-        // Get form data
+        // Victim info
         $victim_data = [
             'last_name' => $_POST['last_name'],
             'first_name' => $_POST['first_name'],
@@ -48,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'guardian' => $_POST['guardian']
         ];
 
+        // Bite details
         $bite_data = [
             'bite_location' => $_POST['bite_location'],
             'body_part' => $_POST['body_part'],
@@ -63,42 +63,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'owner_name' => $_POST['owner_name']
         ];
 
-        $payment_data = [
-            'payment_method' => $_POST['payment_method'],
-            'gcash_ref_no' => isset($_POST['gcash_ref_no']) ? $_POST['gcash_ref_no'] : null,
-            'payment_proof' => $payment_proof
-        ];
+        // Payment info
+        $payment_type = $_POST['payment_method'];
+        $gcash_ref_no = isset($_POST['gcash_ref_no']) ? $_POST['gcash_ref_no'] : null;
 
-        // Insert into database
-        $sql = "INSERT INTO animal_bite_reports (
-            permit_id, user_id, 
-            last_name, first_name, middle_name, dob, age, gender, contact, guardian,
-            bite_location, body_part, washed, bite_date, animal_description, color, marks,
-            animal_condition, registered, other_animals, dog_condition, owner_name,
-            payment_method, gcash_ref_no, payment_proof, created_at
-        ) VALUES (
-            :report_id, :user_id,
-            :last_name, :first_name, :middle_name, :dob, :age, :gender, :contact, :guardian,
-            :bite_location, :body_part, :washed, :bite_date, :animal_description, :color, :marks,
-            :animal_condition, :registered, :other_animals, :dog_condition, :owner_name,
-            :payment_method, :gcash_ref_no, :payment_proof, NOW()
-        )";
+        // If online payment (PayMongo Checkout)
+        if ($payment_type === 'online') {
+            $ch = curl_init();
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(array_merge(
-            ['report_id' => $report_id, 'user_id' => $user_id],
-            $victim_data,
-            $bite_data,
-            $payment_data
-        ));
+            curl_setopt($ch, CURLOPT_URL, "https://api.paymongo.com/v1/checkout_sessions");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
 
-        // Create notification
-        $message = "Your animal bite report (ID: $report_id) has been submitted successfully.";
+            $data = [
+                "data" => [
+                    "attributes" => [
+                        "cancel_url" => "http://localhost/project/animal_bite.php",
+                        "success_url" => "http://localhost/project/success_redirect.php?report_id=$report_id",
+                        "description" => "Animal Bite Report Payment - $report_id",
+                        "line_items" => [[
+                            "name" => "Animal Bite Report Fee",
+                            "quantity" => 1,
+                            "amount" => 10000, // Amount in centavos (₱100.00)
+                            "currency" => "PHP"
+                        ]],
+                        "payment_method_types" => ["gcash", "grab_pay", "card"]
+                    ]
+                ]
+            ];
 
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                "Content-Type: application/json",
+                "Authorization: Basic " . base64_encode("YOUR_SECRET_KEY:")
+            ]);
 
-        $_SESSION['success_message'] = "Animal bite report submitted successfully! Your report ID is: $report_id";
-        header("Location: ../dashboard.php");
-        exit();
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            $result = json_decode($response, true);
+
+            if (isset($result['data']['attributes']['checkout_url'])) {
+                // Save report info first before redirect
+                $sql = "INSERT INTO animal_bite_reports (
+                    permit_id, user_id, 
+                    last_name, first_name, middle_name, dob, age, gender, contact, guardian,
+                    bite_location, body_part, washed, bite_date, animal_description, color, marks,
+                    animal_condition, registered, other_animals, dog_condition, owner_name,
+                    payment_method, gcash_ref_no, payment_proof, created_at
+                ) VALUES (
+                    :report_id, :user_id,
+                    :last_name, :first_name, :middle_name, :dob, :age, :gender, :contact, :guardian,
+                    :bite_location, :body_part, :washed, :bite_date, :animal_description, :color, :marks,
+                    :animal_condition, :registered, :other_animals, :dog_condition, :owner_name,
+                    :payment_method, :gcash_ref_no, :payment_proof, NOW()
+                )";
+
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array_merge(
+                    ['report_id' => $report_id, 'user_id' => $user_id],
+                    $victim_data,
+                    $bite_data,
+                    [
+                        'payment_method' => $payment_type,
+                        'gcash_ref_no' => $gcash_ref_no,
+                        'payment_proof' => $payment_proof
+                    ]
+                ));
+
+                // Redirect to PayMongo checkout
+                header("Location: " . $result['data']['attributes']['checkout_url']);
+                exit();
+            } else {
+                $_SESSION['error_message'] = "Error creating PayMongo Checkout Session.";
+                header("Location: ../animal_bite.php");
+                exit();
+            }
+        } else {
+            // For manual (GCash upload or other)
+            $sql = "INSERT INTO animal_bite_reports (
+                permit_id, user_id, 
+                last_name, first_name, middle_name, dob, age, gender, contact, guardian,
+                bite_location, body_part, washed, bite_date, animal_description, color, marks,
+                animal_condition, registered, other_animals, dog_condition, owner_name,
+                payment_method, gcash_ref_no, payment_proof, created_at
+            ) VALUES (
+                :report_id, :user_id,
+                :last_name, :first_name, :middle_name, :dob, :age, :gender, :contact, :guardian,
+                :bite_location, :body_part, :washed, :bite_date, :animal_description, :color, :marks,
+                :animal_condition, :registered, :other_animals, :dog_condition, :owner_name,
+                :payment_method, :gcash_ref_no, :payment_proof, NOW()
+            )";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array_merge(
+                ['report_id' => $report_id, 'user_id' => $user_id],
+                $victim_data,
+                $bite_data,
+                [
+                    'payment_method' => $payment_type,
+                    'gcash_ref_no' => $gcash_ref_no,
+                    'payment_proof' => $payment_proof
+                ]
+            ));
+
+            $_SESSION['success_message'] = "Animal bite report submitted successfully! Your report ID is: $report_id";
+            header("Location: ../dashboard.php");
+            exit();
+        }
     } catch (PDOException $e) {
         $_SESSION['error_message'] = "Database error: " . $e->getMessage();
         header("Location: ../animal_bite.php");
@@ -126,14 +198,12 @@ function uploadFile($field_name, $upload_dir, $file_prefix)
     $file_name = $file_prefix . "_" . time() . "." . $file_ext;
     $file_path = $upload_dir . $file_name;
 
-    // Check file size (max 5MB)
     if ($file['size'] > 5000000) {
         $_SESSION['error_message'] = "File size too large. Maximum size is 5MB.";
         header("Location: ../animal_bite.php");
         exit();
     }
 
-    // Allow only certain file types
     $allowed_types = ['pdf', 'jpg', 'jpeg', 'png'];
     if (!in_array(strtolower($file_ext), $allowed_types)) {
         $_SESSION['error_message'] = "Only PDF, JPG, JPEG, PNG files are allowed.";
