@@ -72,13 +72,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com'; // Set your SMTP server
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'pesolosbanos4@gmail.com'; // SMTP username
-            $mail->Password   = 'rooy awbq emme qqyt'; // SMTP password (use app password for Gmail)
+            $mail->Username   = 'ict1mercado.cdlb@gmail.com'; // SMTP username
+            $mail->Password   = 'swnr plwx zscz yxce'; // SMTP password (use app password for Gmail)
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
             
             // Recipients
-            $mail->setFrom('noreply@yourdomain.com', 'SAMPURIAN');
+            $mail->setFrom('ict1mercado.cdlb@gmail.com', 'SAMPURIAN');
             $mail->addAddress($email);
             
             // Content

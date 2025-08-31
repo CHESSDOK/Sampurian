@@ -39,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $kind_of_establishment = $_POST['establishment_name'];
         $nature_of_business    = $_POST['business_nature'];
         $payment_type          = $_POST['payment_method'];
-        $gcash_ref_no          = isset($_POST['gcash_ref_no']) ? $_POST['gcash_ref_no'] : '';
 
         if ($payment_type === "Online") {
             // ✅ Create PayMongo Checkout Session
@@ -61,8 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'currency' => 'PHP'
                             ]],
                             'payment_method_types' => ['gcash', 'paymaya', 'grab_pay', 'card'],
-                            'success_url' => "http://localhost/project/include/payment_success.php?permit_id=$permit_id",
-                            'cancel_url'  => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id"
+                            'success_url' => "http://localhost/project/include/payment_success.php?permit_id=$permit_id&type=business",
+                            'cancel_url'  => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id&type=business"
                         ]
                     ]
                 ]),
@@ -78,12 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Save as pending
                 $sql = "INSERT INTO business_permit (
                     permit_id, kind_of_establishment, nature_of_business,
-                    business_registration, cedula, barangay_requirements, payment_proof,
-                    user_id, payment_type, gcash_ref_no, created_at, status
+                    business_registration, cedula, barangay_requirements, 
+                    user_id, payment_type, created_at, status
                 ) VALUES (
                     :permit_id, :kind_of_establishment, :nature_of_business,
-                    :business_reg, :cedula, :barangay_reqs, :payment_proof,
-                    :user_id, :payment_type, :gcash_ref_no, NOW(), 'pending'
+                    :business_reg, :cedula, :barangay_reqs,
+                    :user_id, :payment_type, NOW(), 'pending'
                 )";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
@@ -96,11 +95,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':payment_proof' => $payment_proof,
                     ':user_id' => $user_id,
                     ':payment_type' => $payment_type,
-                    ':gcash_ref_no' => $gcash_ref_no
                 ]);
 
                 // 🔗 Redirect user to PayMongo checkout page
-                echo "<script>window.open('$checkoutUrl', '_blank'); window.location.href='../dashboard.php';</script>";
+                header("Location: " . $checkoutUrl);
                 exit;
             } else {
                 $_SESSION['error_message'] = "❌ Failed to create PayMongo checkout session.";
@@ -111,12 +109,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ✅ Cash or manual payment
             $sql = "INSERT INTO business_permit (
                 permit_id, kind_of_establishment, nature_of_business, 
-                business_registration, cedula, barangay_requirements, payment_proof,
-                user_id, payment_type, gcash_ref_no, created_at, status
+                business_registration, cedula, barangay_requirements,
+                user_id, payment_type, created_at, status
             ) VALUES (
                 :permit_id, :kind_of_establishment, :nature_of_business,
-                :business_reg, :cedula, :barangay_reqs, :payment_proof,
-                :user_id, :payment_type, :gcash_ref_no, NOW(), 'unpaid'
+                :business_reg, :cedula, :barangay_reqs,
+                :user_id, :payment_type, NOW(), 'unpaid'
             )";
 
             $stmt = $pdo->prepare($sql);
@@ -130,7 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':payment_proof' => $payment_proof,
                 ':user_id' => $user_id,
                 ':payment_type' => $payment_type,
-                ':gcash_ref_no' => $gcash_ref_no
             ]);
 
             $_SESSION['success_message'] = "Business permit submitted! Please pay at the Barangay Hall.";
@@ -147,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 function uploadFile($field_name, $upload_dir, $file_prefix)
 {
     if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {
-        if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others' && $field_name !== 'payment_proof') {
+        if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others') {
             $_SESSION['error_message'] = "Required file is missing: " . $field_name;
             header("Location: ../barangay_permit.php");
             exit();

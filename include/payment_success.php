@@ -1,74 +1,88 @@
 <?php
 session_start();
 require_once 'config.php';
-require '../vendor/autoload.php'; // Dompdf
-
-use Dompdf\Dompdf;
 
 $permit_id = $_GET['permit_id'] ?? null;
+$request_type = $_GET['type'] ?? null;
 
-if ($permit_id) {
-    // ✅ Mark payment as paid
-    $stmt = $pdo->prepare("UPDATE indigency SET status = 'paid' WHERE permit_id = ?");
-    $stmt->execute([$permit_id]);
+if ($permit_id && $request_type) {
+    // Tables mapping
+    $tables = [
+        "indigency" => [
+            "table" => "indigency",
+            "id_field" => "permit_id",
+            "purpose_field" => "nature_of_assistance",
+            "amount" => 500,
+            "payment_field" => "payment_type"
+        ],
+        "business" => [
+            "table" => "business_permit",
+            "id_field" => "permit_id",
+            "purpose_field" => "nature_of_business",
+            "amount" => 1000,
+            "payment_field" => "payment_type"
+        ],
+        "animal_bite" => [
+            "table" => "animal_bite_reports",
+            "id_field" => "permit_id",
+            "purpose_field" => "animal_description",
+            "amount" => 300,
+            "payment_field" => "payment_method"
+        ],
+        "clearance" => [
+            "table" => "barangay_clearance",
+            "id_field" => "permit_id",
+            "purpose_field" => "purpose",
+            "amount" => 500,
+            "payment_field" => "payment_type"
+        ],
+        "renew" => [
+            "table" => "business_permit_renewal",
+            "id_field" => "permit_id",
+            "purpose_field" => "nature_of_business",
+            "amount" => 500,
+            "payment_field" => "payment_type"
+        ]
+    ];
 
-    // ✅ Fetch user & transaction details
-    $stmt = $pdo->prepare("SELECT i.*, u.f_name, u.m_name, u.l_name 
-                           FROM indigency i 
-                           JOIN users u ON i.user_id = u.id 
-                           WHERE i.permit_id = ?");
-    $stmt->execute([$permit_id]);
-    $transaction = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($transaction) {
-        // ✅ Create receipt HTML
-        $fullName = $transaction['f_name'] . ' ' . $transaction['m_name'] . ' ' . $transaction['l_name'];
-        $datePaid = date("F j, Y, g:i a");
-
-        $receiptNumber = "REC-" . strtoupper(bin2hex(random_bytes(3)));
-
-        $html = "
-        <h2 style='text-align:center;'>Barangay Payment Receipt</h2>
-        <hr>
-        <p><strong>Receipt No:</strong> {$receiptNumber}</p>
-        <p><strong>Permit ID:</strong> {$transaction['permit_id']}</p>
-        <p><strong>Name:</strong> {$fullName}</p>
-        <p><strong>Purpose:</strong> {$transaction['nature_of_assistance']}</p>
-        <p><strong>Amount Paid:</strong> Php 500.00</p>
-        <p><strong>Payment Method:</strong> {$transaction['payment_type']}</p>
-        <p><strong>Date Paid:</strong> {$datePaid}</p>
-        <hr>
-        <p style='text-align:center;'>This is an official receipt of payment.</p>
-        ";
-
-        // ✅ Generate PDF using Dompdf
-        $dompdf = new Dompdf();
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-
-        // ✅ Save PDF to server (optional: store path in DB)
-        $receiptPath = "../receipts/receipt_{$permit_id}.pdf";
-        file_put_contents($receiptPath, $dompdf->output());
-
-        // ✅ Trigger download for user
-        header('Content-Type: application/pdf');
-        header("Content-Disposition: attachment; filename=receipt_$permit_id.pdf");
-        echo $dompdf->output();
-
-        // ✅ Redirect to dashboard after download
-        echo "
-            <script>
-                setTimeout(function(){
-                    window.location.href = '../dashboard.php';
-                }, 3000);
-            </script>
-        ";
+    if (!isset($tables[$request_type])) {
+        $_SESSION['error_message'] = "⚠️ Invalid request type: $request_type";
+        header("Location: ../dashboard.php");
         exit();
     }
+
+    $config = $tables[$request_type];
+    $table = $config['table'];
+    $id_field = $config['id_field'];
+
+    // ✅ Update status to paid
+    $stmt = $pdo->prepare("UPDATE `$table` SET status = 'paid' WHERE `$id_field` = ?");
+    $stmt->execute([$permit_id]);
+
+    // ✅ Set success message
+    $_SESSION['success_message'] = "Payment successful! Your receipt has been downloaded.";
+
+    // ✅ Generate PDF download in new tab and redirect main window
+    echo "<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Payment Processing</title>
+        <script>
+            window.onload = function() {
+                // Open PDF in new tab
+                window.open('generate_receipt.php?permit_id=$permit_id&type=$request_type', '_blank');
+                // Redirect main window to dashboard
+                window.location.href = '../dashboard.php';
+            }
+        </script>
+    </head>
+    <body>
+        <p>Processing your payment... Please wait.</p>
+    </body>
+    </html>";
+    exit();
 }
 
-// If no transaction found
-$_SESSION['error_message'] = "❌ Unable to generate receipt.";
+$_SESSION['error_message'] = "❌ permit_id or type missing in URL.";
 header("Location: ../dashboard.php");
 exit();

@@ -46,8 +46,8 @@
                                     'currency' => 'PHP'
                                 ]],
                                 'payment_method_types' => ['gcash', 'paymaya', 'grab_pay', 'card'],
-                                'success_url' => "http://localhost/project/include/payment_success.php?permit_id=$permit_id",
-                                'cancel_url'  => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id"
+                                'success_url' => "http://localhost/project/include/payment_success.php?permit_id=$permit_id&type=indigency",
+                                'cancel_url'  => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id&type=indigency"
                             ]
                         ]
                     ]),
@@ -109,42 +109,3 @@
             }
         }
 
-        function uploadFile($field_name, $upload_dir, $file_prefix)
-        {
-            if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {
-                if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others' && $field_name !== 'payment_proof') {
-                    $_SESSION['error_message'] = "Required file is missing: " . $field_name;
-                    header("Location: ../indigency.php");
-                    exit();
-                }
-                return '';
-            }
-
-            $file = $_FILES[$field_name];
-            $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $file_name = $file_prefix . "_" . time() . "." . $file_ext;
-            $file_path = $upload_dir . $file_name;
-
-            // Check file size (max 5MB)
-            if ($file['size'] > 5000000) {
-                $_SESSION['error_message'] = "File size too large. Maximum size is 5MB.";
-                header("Location: ../indigency.php");
-                exit();
-            }
-
-            // Allow only certain file types
-            $allowed_types = ['pdf', 'jpg', 'jpeg', 'png'];
-            if (!in_array(strtolower($file_ext), $allowed_types)) {
-                $_SESSION['error_message'] = "Only PDF, JPG, JPEG, PNG files are allowed.";
-                header("Location: ../indigency.php");
-                exit();
-            }
-
-            if (move_uploaded_file($file['tmp_name'], $file_path)) {
-                return $file_path;
-            } else {
-                $_SESSION['error_message'] = "Error uploading file.";
-                header("Location: ../indigency.php");
-                exit();
-            }
-        }

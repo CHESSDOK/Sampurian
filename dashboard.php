@@ -105,6 +105,10 @@ $notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'
       50% { transform: scale(1.1); }
       100% { transform: scale(1); }
     }
+    .alert {
+     border-radius: 6px;
+     margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
@@ -129,7 +133,13 @@ $notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'
       </ul>
     </div>
   </nav>
-
+ <?php if (isset($_SESSION['error_message'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?= htmlspecialchars($_SESSION['error_message']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <?php unset($_SESSION['error_message']); ?>
+            <?php endif; ?>
   <!-- Banner (full width) -->
   <div class="container-fluid px-0">
     <div class="card border-0">

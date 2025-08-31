@@ -250,7 +250,6 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     <input type="text" class="form-control" name="purpose" required>
                 </div>
             </div>
-
             <div class="mb-4">
                 <label class="form-label">Required Documents</label>
                 <ul class="list-unstyled">

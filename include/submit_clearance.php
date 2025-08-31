@@ -37,13 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // File upload
         $pic2x2 = uploadFile('picture', $upload_dir, '2x2');
-        $payment_proof = isset($_FILES['payment_proof']) ? uploadFile('payment_proof', $upload_dir, 'Payment_Proof') : '';
 
         // Form data
         $year_stay = $_POST['year_stay'];
         $purpose = $_POST['purpose'];
         $payment_type = $_POST['payment_method'];
-        $gcash_ref_no = isset($_POST['gcash_ref_no']) ? $_POST['gcash_ref_no'] : '';
 
         if ($payment_type === "Online") {
             // ✅ Create PayMongo Checkout Session
@@ -65,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'currency' => 'PHP'
                             ]],
                             'payment_method_types' => ['gcash', 'paymaya', 'grab_pay', 'card'],
-                            'success_url' => "http://localhost/project/include/payment_success.php?permit_id=$permit_id",
-                            'cancel_url'  => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id"
+                            'success_url' => "http://localhost/project/include/payment_success.php?permit_id=$permit_id&type=clearance",
+                            'cancel_url'  => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id&type=clearance"
                         ]
                     ]
                 ]),
@@ -83,12 +81,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Save record as pending
                 $sql = "INSERT INTO barangay_clearance (
                     permit_id, years_stay_in_barangay, purpose,
-                    attachment, payment_proof,
-                    user_id, payment_type, gcash_ref_no, created_at, status
+                    attachment,
+                    user_id, payment_type, created_at, status
                 ) VALUES (
                     :permit_id, :year_stay, :purpose,
-                    :pic2x2, :payment_proof,
-                    :user_id, :payment_type, :gcash_ref_no, NOW(), 'pending'
+                    :pic2x2,
+                    :user_id, :payment_type, NOW(), 'pending'
                 )";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
@@ -96,19 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':year_stay' => $year_stay,
                     ':purpose' => $purpose,
                     ':pic2x2' => $pic2x2,
-                    ':payment_proof' => $payment_proof,
                     ':user_id' => $user_id,
                     ':payment_type' => $payment_type,
-                    ':gcash_ref_no' => $gcash_ref_no
                 ]);
 
                 // ✅ Open PayMongo in new tab, redirect current tab
-                echo "
-                    <script>
-                        window.open('$checkoutUrl', '_blank'); 
-                        window.location.href = '../dashboard.php';
-                    </script>
-                ";
+                header("Location: " . $checkoutUrl);
                 exit;
             } else {
                 $_SESSION['error_message'] = "❌ Failed to create checkout session.";
@@ -119,12 +110,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ✅ Cash payment (direct insert)
             $sql = "INSERT INTO barangay_clearance (
                 permit_id, years_stay_in_barangay, purpose,
-                attachment, payment_proof,
-                user_id, payment_type, gcash_ref_no, created_at, status
+                attachment,
+                user_id, payment_type, created_at, status
             ) VALUES (
                 :permit_id, :year_stay, :purpose,
-                :pic2x2, :payment_proof,
-                :user_id, :payment_type, :gcash_ref_no, NOW(), 'unpaid'
+                :pic2x2,
+                :user_id, :payment_type, NOW(), 'unpaid'
             )";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
@@ -132,10 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':year_stay' => $year_stay,
                 ':purpose' => $purpose,
                 ':pic2x2' => $pic2x2,
-                ':payment_proof' => $payment_proof,
                 ':user_id' => $user_id,
                 ':payment_type' => $payment_type,
-                ':gcash_ref_no' => $gcash_ref_no
             ]);
 
             $_SESSION['success_message'] = "Barangay clearance request submitted, pay at Barangay Hall.";
@@ -153,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 function uploadFile($field_name, $upload_dir, $file_prefix)
 {
     if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {
-        if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others' && $field_name !== 'payment_proof') {
+        if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'doc_others') {
             $_SESSION['error_message'] = "Required file is missing: " . $field_name;
             header("Location: ../clearance.php");
             exit();

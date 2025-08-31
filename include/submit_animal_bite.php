@@ -28,8 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generate unique report ID
         $report_id = "ABR-" . date("Ymd") . "-" . strtoupper(bin2hex(random_bytes(6)));
 
-        // File upload handling
-        $payment_proof = isset($_FILES['payment_proof']) ? uploadFile('payment_proof', $upload_dir, 'Payment_Proof') : '';
 
         // Process animal conditions (checkboxes)
         $animal_conditions = isset($_POST['condition']) ? $_POST['condition'] : [];
@@ -65,10 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Payment info
         $payment_type = $_POST['payment_method'];
-        $gcash_ref_no = isset($_POST['gcash_ref_no']) ? $_POST['gcash_ref_no'] : null;
 
         // If online payment (PayMongo Checkout)
-        if ($payment_type === 'online') {
+        if ($payment_type === 'Online') {
+            // ✅ Use the same PayMongo secret key as your other files
+            $secret_key = "sk_test_RtRn2nPog8rdTZu1Pdw2KoXo";
+            
             $ch = curl_init();
 
             curl_setopt($ch, CURLOPT_URL, "https://api.paymongo.com/v1/checkout_sessions");
@@ -79,8 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "data" => [
                     "attributes" => [
                         "cancel_url" => "http://localhost/project/animal_bite.php",
-                        "success_url" => "http://localhost/project/success_redirect.php?report_id=$report_id",
-                        "description" => "Animal Bite Report Payment - $report_id",
+                        "success_url" => "http://localhost/project/include/payment_success.php?permit_id=$report_id&type=animal_bite",
+                        "description" => "Animal Bite Report Fee - $report_id",
                         "line_items" => [[
                             "name" => "Animal Bite Report Fee",
                             "quantity" => 1,
@@ -95,28 +95,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 "Content-Type: application/json",
-                "Authorization: Basic " . base64_encode("YOUR_SECRET_KEY:")
+                "Authorization: Basic " . base64_encode("$secret_key:")
             ]);
 
             $response = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
             $result = json_decode($response, true);
 
-            if (isset($result['data']['attributes']['checkout_url'])) {
-                // Save report info first before redirect
+            if ($http_code === 200 && isset($result['data']['attributes']['checkout_url'])) {
+                // ✅ Use 'Pending' (capital P) to match ENUM constraint
                 $sql = "INSERT INTO animal_bite_reports (
-                    permit_id, user_id, 
+                    permit_id, user_id, status,
                     last_name, first_name, middle_name, dob, age, gender, contact, guardian,
                     bite_location, body_part, washed, bite_date, animal_description, color, marks,
                     animal_condition, registered, other_animals, dog_condition, owner_name,
-                    payment_method, gcash_ref_no, payment_proof, created_at
+                    payment_method, created_at
                 ) VALUES (
-                    :report_id, :user_id,
+                    :report_id, :user_id, 'Pending',
                     :last_name, :first_name, :middle_name, :dob, :age, :gender, :contact, :guardian,
                     :bite_location, :body_part, :washed, :bite_date, :animal_description, :color, :marks,
                     :animal_condition, :registered, :other_animals, :dog_condition, :owner_name,
-                    :payment_method, :gcash_ref_no, :payment_proof, NOW()
+                    :payment_method, NOW()
                 )";
 
                 $stmt = $pdo->prepare($sql);
@@ -126,8 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $bite_data,
                     [
                         'payment_method' => $payment_type,
-                        'gcash_ref_no' => $gcash_ref_no,
-                        'payment_proof' => $payment_proof
                     ]
                 ));
 
@@ -135,24 +134,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: " . $result['data']['attributes']['checkout_url']);
                 exit();
             } else {
-                $_SESSION['error_message'] = "Error creating PayMongo Checkout Session.";
+                // Debug PayMongo error
+                error_log("PayMongo Error: " . print_r($result, true));
+                $_SESSION['error_message'] = "Error creating payment session. Please try again or use cash payment.";
                 header("Location: ../animal_bite.php");
                 exit();
             }
         } else {
-            // For manual (GCash upload or other)
+            // ✅ For cash payments, use 'Pending' status (not 'unpaid')
             $sql = "INSERT INTO animal_bite_reports (
-                permit_id, user_id, 
+                permit_id, user_id, status,
                 last_name, first_name, middle_name, dob, age, gender, contact, guardian,
                 bite_location, body_part, washed, bite_date, animal_description, color, marks,
                 animal_condition, registered, other_animals, dog_condition, owner_name,
-                payment_method, gcash_ref_no, payment_proof, created_at
+                payment_method, created_at
             ) VALUES (
-                :report_id, :user_id,
+                :report_id, :user_id, 'Pending',
                 :last_name, :first_name, :middle_name, :dob, :age, :gender, :contact, :guardian,
                 :bite_location, :body_part, :washed, :bite_date, :animal_description, :color, :marks,
                 :animal_condition, :registered, :other_animals, :dog_condition, :owner_name,
-                :payment_method, :gcash_ref_no, :payment_proof, NOW()
+                :payment_method, NOW()
             )";
 
             $stmt = $pdo->prepare($sql);
@@ -162,8 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $bite_data,
                 [
                     'payment_method' => $payment_type,
-                    'gcash_ref_no' => $gcash_ref_no,
-                    'payment_proof' => $payment_proof
                 ]
             ));
 
@@ -177,44 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     } catch (Exception $e) {
         $_SESSION['error_message'] = "Error: " . $e->getMessage();
-        header("Location: ../animal_bite.php");
-        exit();
-    }
-}
-
-function uploadFile($field_name, $upload_dir, $file_prefix)
-{
-    if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {
-        if ($_FILES[$field_name]['error'] === UPLOAD_ERR_NO_FILE && $field_name !== 'payment_proof') {
-            $_SESSION['error_message'] = "Required file is missing: " . $field_name;
-            header("Location: ../animal_bite.php");
-            exit();
-        }
-        return null;
-    }
-
-    $file = $_FILES[$field_name];
-    $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $file_name = $file_prefix . "_" . time() . "." . $file_ext;
-    $file_path = $upload_dir . $file_name;
-
-    if ($file['size'] > 5000000) {
-        $_SESSION['error_message'] = "File size too large. Maximum size is 5MB.";
-        header("Location: ../animal_bite.php");
-        exit();
-    }
-
-    $allowed_types = ['pdf', 'jpg', 'jpeg', 'png'];
-    if (!in_array(strtolower($file_ext), $allowed_types)) {
-        $_SESSION['error_message'] = "Only PDF, JPG, JPEG, PNG files are allowed.";
-        header("Location: ../animal_bite.php");
-        exit();
-    }
-
-    if (move_uploaded_file($file['tmp_name'], $file_path)) {
-        return $file_path;
-    } else {
-        $_SESSION['error_message'] = "Error uploading file.";
         header("Location: ../animal_bite.php");
         exit();
     }

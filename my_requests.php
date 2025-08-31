@@ -22,7 +22,7 @@ $permits = [
 $rows = [];
 
 foreach ($permits as $label => $table) {
-    $sql = "SELECT id, status, gcash_ref_no, comment, created_at FROM $table WHERE user_id = ?";
+    $sql = "SELECT id, status, comment, created_at, pdf_path FROM $table WHERE user_id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$user_id]);
 
@@ -33,6 +33,7 @@ foreach ($permits as $label => $table) {
             'comment' => $row['comment'],
             'date' => date('d M Y', strtotime($row['created_at'])),
             'table' => $table,
+            'pdf_path' => $row['pdf_path'],
             'id' => $row['id']
         ];
     }
@@ -240,6 +241,7 @@ $notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'
                     <div class="col-md-3">Application Type</div>
                     <div class="col-md-2">Status</div>
                     <div class="col-md-2">Date</div>
+                    <div class="col-md-2">File</div>
                     <div class="col-md-3">Comments </div>
                 </div>
 
@@ -249,6 +251,13 @@ $notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'
                             <div class="col-md-3"><?php echo htmlspecialchars($row['type']); ?></div>
                             <div class="col-md-2"><?php echo htmlspecialchars($row['status']); ?></div>
                             <div class="col-md-2"><?php echo htmlspecialchars($row['date']); ?></div>
+                            <div class="col-md-2">
+                                <?php if (!empty($row['pdf_path'])): ?>
+                                    <a href="<?php echo htmlspecialchars($row['pdf_path']); ?>" target="_blank">View File</a>
+                                <?php else: ?>
+                                    No File
+                                <?php endif; ?>
+                            </div>
                             <div class="col-md-3"><?php echo htmlspecialchars($row['comment']); ?></div>
                         </div>
                     <?php endforeach; ?>
