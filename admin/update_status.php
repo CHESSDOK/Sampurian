@@ -16,10 +16,10 @@ $map = [
     'animal_bite' => 'animal_bite_reports'
 ];
 
-$id = $_POST['id'] ?? null;
+$id     = $_POST['id']     ?? null;
 $status = $_POST['status'] ?? null;
-$comment = $_POST['comment'] ?? null;
-$type = $_POST['type'] ?? null;
+$comment= $_POST['comment']?? null;
+$type   = $_POST['type']   ?? null;
 
 if (!$id || !$status || !$type || !isset($map[$type])) {
     http_response_code(400);
@@ -29,6 +29,7 @@ if (!$id || !$status || !$type || !isset($map[$type])) {
 
 $table = $map[$type];
 
+// pull user info (extend if you need extra fields for PDFs)
 switch ($type) {
     case 'business_permit':
         $userSql = "SELECT u.id as uid, u.f_name, u.m_name, u.l_name, u.email, u.contact, u.address,
@@ -37,7 +38,6 @@ switch ($type) {
                     JOIN users u ON u.id = bp.user_id
                     WHERE bp.id = :id";
         break;
-
     case 'business_permit_renewal':
         $userSql = "SELECT u.id as uid, u.f_name, u.m_name, u.l_name, u.email, u.contact, u.address,
                            bp.nature_of_business, bp.name_kind_of_establishment
@@ -45,7 +45,6 @@ switch ($type) {
                     JOIN users u ON u.id = bp.user_id
                     WHERE bp.id = :id";
         break;
-
     case 'barangay_clearance':
     case 'indigency':
     case 'animal_bite':
@@ -54,7 +53,6 @@ switch ($type) {
                     JOIN users u ON u.id = bp.user_id
                     WHERE bp.id = :id";
         break;
-
     default:
         http_response_code(400);
         echo "Invalid request type";
@@ -71,9 +69,9 @@ if (!$row) {
     exit;
 }
 
-$user_id = $row['uid'];
+$user_id = (int)$row['uid'];
 
-// update status
+// update status + comment
 $sql = "UPDATE $table SET status = :status, comment = :comment WHERE id = :id";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([
@@ -82,23 +80,38 @@ $stmt->execute([
     ':id' => $id
 ]);
 
-// prepare message
+// prepare message used for email/SMS (you said message column isn't needed for UI)
 $message = "Your $type request has been $status";
 if (!empty($comment)) {
     $message .= ": " . $comment;
 }
 
-// insert notification
-$notificationSql = "INSERT INTO notification (user_id, request_id, message, is_read) 
-                    VALUES (:user_id, :request_id, :message, 0)";
-$notificationStmt = $pdo->prepare($notificationSql);
-$notificationStmt->execute([
-    ':user_id' => $user_id,
+// 1) Insert USER notification for the status update
+$ins = $pdo->prepare("
+    INSERT INTO notification (user_id, request_id, module, recipient_type, is_read, is_read_admin)
+    VALUES (:user_id, :request_id, :module, 'user', 0, 1)
+");
+$ins->execute([
+    ':user_id'    => $user_id,
     ':request_id' => $id,
-    ':message' => $message
+    ':module'     => $type
 ]);
 
-// --- SEND SMS using ClickSend ---
+// 2) Mark the corresponding ADMIN notification (for this request) as read (if it exists)
+$updAdmin = $pdo->prepare("
+    UPDATE notification 
+    SET is_read_admin = 1 
+    WHERE recipient_type='admin' 
+      AND module = :module 
+      AND request_id = :request_id
+      AND is_read_admin = 0
+");
+$updAdmin->execute([
+    ':module' => $type,
+    ':request_id' => $id
+]);
+
+// --- SEND SMS using ClickSend (as in your code) ---
 if (!empty($row['contact'])) {
     $ch = curl_init();
 
@@ -108,7 +121,7 @@ if (!empty($row['contact'])) {
                 "source" => "php",
                 "from" => "Barangay",
                 "body" => $message,
-                "to" => "+63" . ltrim($row['contact'], '0') // convert to PH format
+                "to" => "+63" . ltrim($row['contact'], '0')
             ]
         ]
     ];
@@ -133,43 +146,39 @@ if ($status === "Approved") {
         'id' => $id,
         'name' => $row['f_name']." ".$row['m_name']." ".$row['l_name'],
         'address' => $row['address'],
-        'age' => $row['age'] ?? '___', // for indigency
+        'age' => $row['age'] ?? '___',
         'nature_of_business' => $row['nature_of_business'] ?? '',
         'kind_of_establishment' => $row['kind_of_establishment'] ?? '',
-        'incident_details' => $row['incident_details'] ?? '' // for animal bite
+        'incident_details' => $row['incident_details'] ?? ''
     ];
 
     $attachment = generatePDF($type, $pdfData);
 
-    // save path to DB
+    // save pdf path
     $updatePdf = $pdo->prepare("UPDATE $table SET pdf_path = :pdf WHERE id = :id");
     $updatePdf->execute([
         ':pdf' => $attachment,
         ':id' => $id
     ]);
 
-    // Send email with PHPMailer
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';  // Your SMTP server
+        $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'ict1mercado.cdlb@gmail.com';
-        $mail->Password   = 'swnr plwx zscz yxce'; // or App Password
+        $mail->Password   = 'swnr plwx zscz yxce'; // app password
         $mail->SMTPSecure = 'tls';
         $mail->Port       = 587;
 
         $mail->setFrom('ict1mercado.cdlb@gmail.com', 'Barangay Office');
         $mail->addAddress($row['email'], $row['f_name'] . " " . $row['l_name']);
-
         $mail->isHTML(true);
         $mail->Subject = "Your $type Request Status";
         $mail->Body    = nl2br($message);
-
         if (file_exists($attachment)) {
             $mail->addAttachment($attachment);
         }
-
         $mail->send();
     } catch (Exception $e) {
         error_log("PHPMailer Error: {$mail->ErrorInfo}");

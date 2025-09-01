@@ -8,7 +8,11 @@ $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Mark notifications as read when user visits this page
-$update_stmt = $pdo->prepare("UPDATE notification SET is_read = 1 WHERE user_id = ?");
+$update_stmt = $pdo->prepare("
+    UPDATE notification 
+    SET is_read = 1 
+    WHERE user_id = ? AND recipient_type = 'user'
+");
 $update_stmt->execute([$user_id]);
 
 $permits = [
@@ -260,7 +264,7 @@ $notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'
                             </div>
                             <div class="col-md-3"><?php echo htmlspecialchars($row['comment']); ?></div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endforeach; ?>    
                 <?php else: ?>
                     <div class="row row-entry text-center">
                         <div class="col-12">No permit applications found.</div>

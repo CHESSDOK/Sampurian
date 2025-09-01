@@ -15,7 +15,14 @@ $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Check for unread notifications
-$notification_stmt = $pdo->prepare("SELECT COUNT(*) as unread_count FROM notification WHERE user_id = ? AND is_read = 0");
+$notification_stmt = $pdo->prepare("
+    SELECT COUNT(*) as unread_count 
+    FROM notification 
+    WHERE user_id = ? 
+      AND is_read = 0
+      AND recipient_type = 'user'
+");
+
 $notification_stmt->execute([$user_id]);
 $notification_count = $notification_stmt->fetch(PDO::FETCH_ASSOC)['unread_count'];
 ?>

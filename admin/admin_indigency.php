@@ -9,6 +9,11 @@ $sql = "SELECT i.*, u.f_name, u.m_name, u.l_name, u.address
         ORDER BY i.created_at DESC";
 $stmt = $pdo->query($sql);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$mark = $pdo->prepare("UPDATE notification SET is_read_admin=1 
+                       WHERE recipient_type='admin' AND module='indigency' AND is_read_admin=0");
+$mark->execute();
+
 ?>
 <div class="card p-3">
     <div class="table-wrap">
