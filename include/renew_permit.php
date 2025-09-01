@@ -35,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $business_Permit = uploadFile('doc_business_permit', $upload_dir, 'Business_Permit');
         $business_Permit_payment = uploadFile('doc_business_payment', $upload_dir, 'Business_Permit_Payment');
         $barangay_reqs = uploadFile('doc_others', $upload_dir, 'Barangay_Requirements');
-        $payment_proof = isset($_FILES['payment_proof']) ? uploadFile('payment_proof', $upload_dir, 'Payment_Proof') : '';
 
         // Form data
         $kind_of_establishment = $_POST['establishment_name'];
@@ -43,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $payment_type = $_POST['payment_method'];
 
         // ✅ If online payment via PayMongo
-        if ($payment_type === 'online') {
+        if ($payment_type === 'Online') {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, "https://api.paymongo.com/v1/checkout_sessions");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -52,8 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
                 "data" => [
                     "attributes" => [
-                        "cancel_url" => "http://localhost/project/renew_permit.php",
-                        "success_url" => "http://localhost/project/success_redirect.php?permit_id=$permit_id&type=renew",
+                        "cancel_url" => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id&type=renew",
+                        "success_url" => "http://localhost/project/include/payment_success.php?permit_id=$permit_id&type=renew",
                         "description" => "Business Permit Renewal - $permit_id",
                         "line_items" => [[
                             "name" => "Business Permit Renewal Fee",
@@ -61,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             "amount" => 50000, // ₱500.00 (amount in centavos)
                             "currency" => "PHP"
                         ]],
-                        "payment_method_types" => ["gcash", "grab_pay", "card"]
+                        "payment_method_types" => ["gcash", "paymaya", "grab_pay", "card"]
                     ]
                 ]
             ];
@@ -69,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 "Content-Type: application/json",
-                "Authorization: Basic " . base64_encode("YOUR_SECRET_KEY:")
+                "Authorization: Basic " . base64_encode("sk_test_RtRn2nPog8rdTZu1Pdw2KoXo::")
             ]);
 
             $response = curl_exec($ch);
@@ -99,11 +98,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':barangay_reqs' => $barangay_reqs,
                     ':business_Permit' => $business_Permit,
                     ':business_Permit_payment' => $business_Permit_payment,
-                    ':payment_proof' => $payment_proof,
                     ':user_id' => $user_id,
                     ':payment_type' => $payment_type,
                 ]);
+                    // ✅ Insert notification for admin
+                    $message = "New Business Permit Renewal submitted by " . $user['f_name'] . " " . $user['l_name'];
 
+                    $notif_sql = "INSERT INTO notification 
+                        (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                        VALUES (?, ?, 'business_permit_renewal', 'admin', ?, 0, 0, NOW())";
+
+                    $pdo->prepare($notif_sql)->execute([$user_id, $permit_id, $message]);
                 header("Location: " . $result['data']['attributes']['checkout_url']);
                 exit();
             } else {
@@ -133,10 +138,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':barangay_reqs' => $barangay_reqs,
                 ':business_Permit' => $business_Permit,
                 ':business_Permit_payment' => $business_Permit_payment,
-                ':payment_proof' => $payment_proof,
                 ':user_id' => $user_id,
                 ':payment_type' => $payment_type,
             ]);
+
+            // ✅ Insert notification for admin
+            $message = "New Business Permit Renewal submitted by " . $user['f_name'] . " " . $user['l_name'];
+
+            $notif_sql = "INSERT INTO notification 
+                (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                VALUES (?, ?, 'business_permit_renewal', 'admin', ?, 0, 0, NOW())";
+
+            $pdo->prepare($notif_sql)->execute([$user_id, $permit_id, $message]);
 
             $_SESSION['success_message'] = "Business permit application submitted successfully! Your permit ID is: $permit_id";
             header("Location: ../dashboard.php");

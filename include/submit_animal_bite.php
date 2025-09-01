@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
                 "data" => [
                     "attributes" => [
-                        "cancel_url" => "http://localhost/project/animal_bite.php",
+                        "cancel_url" => "http://localhost/project/include/payment_failed.php?permit_id=$permit_id&type=animal_bite",
                         "success_url" => "http://localhost/project/include/payment_success.php?permit_id=$report_id&type=animal_bite",
                         "description" => "Animal Bite Report Fee - $report_id",
                         "line_items" => [[
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             "amount" => 10000, // Amount in centavos (₱100.00)
                             "currency" => "PHP"
                         ]],
-                        "payment_method_types" => ["gcash", "grab_pay", "card"]
+                        "payment_method_types" => ["gcash", "paymaya", "grab_pay", "card"]
                     ]
                 ]
             ];
@@ -129,6 +129,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'payment_method' => $payment_type,
                     ]
                 ));
+                // ✅ Insert notification for admin
+                $message = "New Animal Bite Report submitted by " . $user['f_name'] . " " . $user['l_name'];
+
+                $notif_sql = "INSERT INTO notification 
+                    (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                    VALUES (?, ?, 'animal_bite', 'admin', ?, 0, 0, NOW())";
+
+                $pdo->prepare($notif_sql)->execute([$user_id, $report_id, $message]);
 
                 // Redirect to PayMongo checkout
                 header("Location: " . $result['data']['attributes']['checkout_url']);
@@ -165,6 +173,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'payment_method' => $payment_type,
                 ]
             ));
+            // ✅ Insert notification for admin
+            $message = "New Animal Bite Report submitted by " . $user['f_name'] . " " . $user['l_name'];
+
+            $notif_sql = "INSERT INTO notification 
+                (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                VALUES (?, ?, 'animal_bite', 'admin', ?, 0, 0, NOW())";
+
+            $pdo->prepare($notif_sql)->execute([$user_id, $report_id, $message]);
+
 
             $_SESSION['success_message'] = "Animal bite report submitted successfully! Your report ID is: $report_id";
             header("Location: ../dashboard.php");

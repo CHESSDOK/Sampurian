@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $user_id = $_SESSION['user_id'];
 
-        // Get user information to create directory
+        // Get user info
         $stmt = $pdo->prepare("SELECT f_name, m_name, l_name FROM users WHERE id = ?");
         $stmt->execute([$user_id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -33,9 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $business_reg   = uploadFile('doc_business_reg', $upload_dir, 'Business_Registration');
         $cedula         = uploadFile('doc_cedula', $upload_dir, 'Cedula');
         $barangay_reqs  = uploadFile('doc_others', $upload_dir, 'Barangay_Requirements');
-        $payment_proof  = isset($_FILES['payment_proof']) ? uploadFile('payment_proof', $upload_dir, 'Payment_Proof') : '';
 
-        // Get form data
+        // Form data
         $kind_of_establishment = $_POST['establishment_name'];
         $nature_of_business    = $_POST['business_nature'];
         $payment_type          = $_POST['payment_method'];
@@ -56,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'line_items' => [[
                                 'name'     => 'Barangay Business Permit',
                                 'quantity' => 1,
-                                'amount'   => 50000, // ₱500.00 (in centavos)
+                                'amount'   => 50000, // ₱500.00
                                 'currency' => 'PHP'
                             ]],
                             'payment_method_types' => ['gcash', 'paymaya', 'grab_pay', 'card'],
@@ -77,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Save as pending
                 $sql = "INSERT INTO business_permit (
                     permit_id, kind_of_establishment, nature_of_business,
-                    business_registration, cedula, barangay_requirements, 
+                    business_registration, cedula, barangay_requirements,
                     user_id, payment_type, created_at, status
                 ) VALUES (
                     :permit_id, :kind_of_establishment, :nature_of_business,
@@ -92,12 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':business_reg' => $business_reg,
                     ':cedula' => $cedula,
                     ':barangay_reqs' => $barangay_reqs,
-                    ':payment_proof' => $payment_proof,
                     ':user_id' => $user_id,
                     ':payment_type' => $payment_type,
                 ]);
 
-                // 🔗 Redirect user to PayMongo checkout page
+                // ✅ Insert notification for admin
+                $message = "New Business Permit request submitted by " . $user['f_name'] . " " . $user['l_name'];
+                $notif_sql = "INSERT INTO notification 
+                    (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                    VALUES (?, ?, 'business_permit', 'admin', ?, 0, 0, NOW())";
+                $pdo->prepare($notif_sql)->execute([$user_id, $permit_id, $message]);
+
+                // Redirect to PayMongo Checkout
                 header("Location: " . $checkoutUrl);
                 exit;
             } else {
@@ -106,9 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         } else {
-            // ✅ Cash or manual payment
+            // ✅ Cash / manual payment
             $sql = "INSERT INTO business_permit (
-                permit_id, kind_of_establishment, nature_of_business, 
+                permit_id, kind_of_establishment, nature_of_business,
                 business_registration, cedula, barangay_requirements,
                 user_id, payment_type, created_at, status
             ) VALUES (
@@ -116,7 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 :business_reg, :cedula, :barangay_reqs,
                 :user_id, :payment_type, NOW(), 'unpaid'
             )";
-
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':permit_id' => $permit_id,
@@ -125,10 +129,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':business_reg' => $business_reg,
                 ':cedula' => $cedula,
                 ':barangay_reqs' => $barangay_reqs,
-                ':payment_proof' => $payment_proof,
                 ':user_id' => $user_id,
                 ':payment_type' => $payment_type,
             ]);
+
+            // ✅ Insert notification for admin
+            $message = "New Business Permit request submitted by " . $user['f_name'] . " " . $user['l_name'];
+            $notif_sql = "INSERT INTO notification 
+                (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                VALUES (?, ?, 'business_permit', 'admin', ?, 0, 0, NOW())";
+            $pdo->prepare($notif_sql)->execute([$user_id, $permit_id, $message]);
 
             $_SESSION['success_message'] = "Business permit submitted! Please pay at the Barangay Hall.";
             header("Location: ../dashboard.php");
@@ -141,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// ✅ File upload function
 function uploadFile($field_name, $upload_dir, $file_prefix)
 {
     if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] !== UPLOAD_ERR_OK) {

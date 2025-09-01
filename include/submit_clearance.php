@@ -1,5 +1,4 @@
 <?php
-// include/submit_business_permit.php
 session_start();
 require_once 'config.php';
 require '../vendor/autoload.php'; // PayMongo SDK
@@ -18,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $user_id = $_SESSION['user_id'];
 
-        // Get user info to create directory
+        // Get user info
         $stmt = $pdo->prepare("SELECT f_name, m_name, l_name FROM users WHERE id = ?");
         $stmt->execute([$user_id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -33,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Generate unique permit ID
-        $permit_id = "BP-" . date("Ymd") . "-" . strtoupper(bin2hex(random_bytes(6)));
+        $permit_id = "CLR-" . date("Ymd") . "-" . strtoupper(bin2hex(random_bytes(6)));
 
         // File upload
         $pic2x2 = uploadFile('picture', $upload_dir, '2x2');
@@ -98,7 +97,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':payment_type' => $payment_type,
                 ]);
 
-                // ✅ Open PayMongo in new tab, redirect current tab
+                // ✅ Insert notification for admin
+                $message = "New Barangay Clearance request submitted by " . $user['f_name'] . " " . $user['l_name'];
+                $notif_sql = "INSERT INTO notification 
+                    (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                    VALUES (?, ?, 'barangay_clearance', 'admin', ?, 0, 0, NOW())";
+                $pdo->prepare($notif_sql)->execute([$user_id, $permit_id, $message]);
+
+                // Redirect to PayMongo Checkout
                 header("Location: " . $checkoutUrl);
                 exit;
             } else {
@@ -126,6 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':user_id' => $user_id,
                 ':payment_type' => $payment_type,
             ]);
+
+            // ✅ Insert notification for admin
+            $message = "New Barangay Clearance request submitted by " . $user['f_name'] . " " . $user['l_name'];
+            $notif_sql = "INSERT INTO notification 
+                (user_id, request_id, module, recipient_type, message, is_read, is_read_admin, created_at) 
+                VALUES (?, ?, 'barangay_clearance', 'admin', ?, 0, 0, NOW())";
+            $pdo->prepare($notif_sql)->execute([$user_id, $permit_id, $message]);
 
             $_SESSION['success_message'] = "Barangay clearance request submitted, pay at Barangay Hall.";
             header("Location: ../dashboard.php");

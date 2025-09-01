@@ -20,7 +20,7 @@ $mark->execute();
     <table class="table table-hover">
         <thead class="table-primary">
             <tr>
-                <th>Permit ID</th>
+                <th>tracking</th>
                 <th>Requester</th>
                 <th>Address</th>
                 <th>Nature of Assistance</th>
@@ -33,7 +33,27 @@ $mark->execute();
         <tbody>
         <?php foreach($rows as $r): ?>
             <tr id="row-<?= $r['id'] ?>">
-                <td><?= htmlspecialchars($r['permit_id']) ?></td>
+                <td>
+                    <?php
+                    $created = new DateTime($r['created_at']);
+                    $now = new DateTime();
+                    $diff = $created->diff($now);
+
+                    if ($diff->y > 0) {
+                        echo $diff->y . " year(s) ago";
+                    } elseif ($diff->m > 0) {
+                        echo $diff->m . " month(s) ago";
+                    } elseif ($diff->d > 0) {
+                        echo $diff->d . " day(s) ago";
+                    } elseif ($diff->h > 0) {
+                        echo $diff->h . " hour(s) ago";
+                    } elseif ($diff->i > 0) {
+                        echo $diff->i . " minute(s) ago";
+                    } else {
+                        echo "just now";
+                    }
+                    ?>
+                </td>
                 <td><?= htmlspecialchars(trim($r['f_name'].' '.$r['m_name'].' '.$r['l_name'])) ?></td>
                 <td><?= htmlspecialchars($r['address'] ?? '-') ?></td>
                 <td><?= htmlspecialchars($r['nature_of_assistance'] ?? '-') ?></td>
