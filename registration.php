@@ -29,7 +29,11 @@
                         <td colspan="2"><input type="email" name="email" id="email" placeholder="Email address *" required></td>
                     </tr>
                     <tr>
-                        <td colspan="2"><input type="text" name="contact" placeholder="Mobile no. *" required></td>
+                        <td colspan="2"><input type="text" name="contact" id="contact" placeholder="Mobile no. *" 
+                            pattern="^(09\d{9}|(\+639)\d{9})$" 
+                            title="Enter a valid PH number (09XXXXXXXXX or +639XXXXXXXXX)" 
+                            required>
+                        </td>
                     </tr>
                     <tr>
                         <td colspan="2"><input type="date" name="birthday" required></td>
@@ -165,6 +169,16 @@
             .then(data => {
                 document.getElementById('otpMessage').innerHTML = '<p style="color: green;">' + data.message + '</p>';
             });
+        });
+
+        document.getElementById('contact').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9+]/g, ''); // allow only numbers and +
+            if (this.value.startsWith('+') && !this.value.startsWith('+63')) {
+                this.value = '+63';
+            }
+            if (this.value.startsWith('0') && this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
         });
     </script>
 </body>
