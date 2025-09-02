@@ -10,6 +10,41 @@ function generatePDF($type, $data) {
 
     $html = '';
 
+     // ---------------- Renew BUSINESS PERMIT ----------------
+    if ($type === "business_permit_renewal") {
+        $html = '
+        <div style="text-align:center;">
+            <img src="../assets/logo-left.png" height="60" style="float:left;">
+            <img src="../assets/logo-right.png" height="60" style="float:right;">
+            <h4>REPUBLIKA NG PILIPINAS<br>LALAWIGAN NG LAGUNA<br>LUNGSOD NG CALAMBA<br>BARANGAY SAMPIRUHAN</h4>
+            <h3 style="color:#000080;">Barangay Business Clearance</h3>
+        </div>
+        <br><br>
+        <p>To whom it may concern:</p>
+        <p style="text-align:justify;">
+            Pursuant to the provisions of Barangay Tax Ordinance No.1, series of 1995 as amended, 
+            this CERTIFICATE is hereby granted to:
+        </p>
+        <h2 style="text-align:center;">'.htmlspecialchars($data['name']).'</h2>
+        <p style="text-align:center;"><i>(Name of Applicant)</i></p>
+        <h3 style="text-align:center;">'.htmlspecialchars($data['kind_of_establishment']).'</h3>
+        <p style="text-align:center;"><i>(Name/Kind of Establishment)</i></p>
+        <p style="text-align:center;">Resident of '.htmlspecialchars($data['address']).' to operate and maintain</p>
+        <h3 style="text-align:center;">'.htmlspecialchars($data['nature_of_business']).'</h3>
+        <p style="text-align:center;"><i>(Nature of Business)</i></p>
+        <p style="text-align:justify;">
+            at Barangay Sampiruhan, Calamba City, subject however to the provisions of existing 
+            laws, ordinances, rules, and regulations governing the operation and maintenance of the same.
+        </p>
+        <br><br>
+        <p>Date Issued: '.date('F d, Y').'</p>
+        <br><br><br>
+        <p style="text-align:right;">
+            <b>Iggs. James Philip C. Dumalaon</b><br>
+            <i>Punong Barangay</i>
+        </p>';
+    }
+
     // ---------------- BUSINESS PERMIT ----------------
     if ($type === "business_permit") {
         $html = '

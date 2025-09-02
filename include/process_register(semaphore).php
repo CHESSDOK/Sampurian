@@ -90,27 +90,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->send();
 
             // ======================
-            // SEND OTP via ClickSend SMS
+            // SEND OTP via Semaphore SMS
             // ======================
-            require_once('../vendor/autoload.php');
+            $semaphore_apikey = "YOUR_SEMAPHORE_API_KEY"; // replace with your API key
+            $semaphore_sender = "SAMPURIAN"; // registered sender name in Semaphore
+            $semaphore_url    = "https://semaphore.co/api/v4/messages";
 
-            $config = ClickSend\Configuration::getDefaultConfiguration()
-                ->setUsername('marklawrencemercado8@gmail.com')   // replace with your ClickSend username
-                ->setPassword('41C87B9D-0F33-7B69-56A4-EE5A63A4D68C');  // replace with your API key
+            $post_fields = [
+                'apikey' => $semaphore_apikey,
+                'number' => $contact, // must be in PH format e.g. 09171234567 or +639171234567
+                'message' => "Your OTP code is: $otp_code. This code will expire in 5 minutes.",
+                'sendername' => $semaphore_sender
+            ];
 
-            $apiInstance = new ClickSend\Api\SMSApi(new GuzzleHttp\Client(), $config);
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $semaphore_url);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_fields));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-            $msg = new \ClickSend\Model\SmsMessage();
-            $msg->setBody("Your OTP code is: $otp_code. This code will expire in 5 minutes.");
-            $msg->setTo($contact);  // make sure $contact contains a valid phone number with country code (e.g., +639XXXXXXXXX)
-            $msg->setSource("php");
+            $response = curl_exec($ch);
+            curl_close($ch);
 
-            $sms_messages = new \ClickSend\Model\SmsMessageCollection();
-            $sms_messages->setMessages([$msg]);
-
-            $result = $apiInstance->smsSendPost($sms_messages);
-
-            echo json_encode(['success' => true, 'message' => 'OTP sent via email and SMS. Please check your inbox and phone.']);
+            echo json_encode(['success' => true, 'message' => 'OTP sent via email and SMS (Semaphore). Please check your inbox and phone.']);
 
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => 'OTP could not be sent. Error: ' . $e->getMessage()]);
