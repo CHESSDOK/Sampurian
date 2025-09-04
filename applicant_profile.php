@@ -167,7 +167,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                         <i class="bi bi-file-earmark-text" style="font-size:2rem;"></i>
                         <h6 class="mt-2 dropdown-toggle" data-bs-toggle="dropdown">Business Permit</h6>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="barangay_permit.php">Request</a></li>
+                            <li><a class="dropdown-item" href="barangay_permit.php">New</a></li>
                             <li><a class="dropdown-item" href="renew_permit.php">Renew</a></li>
                         </ul>
                         </div>

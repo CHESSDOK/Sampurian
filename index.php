@@ -89,6 +89,84 @@
       color: #aaa;
       display: block;
     }
+    /* Mobile View */
+@media (max-width: 768px) {
+  /* Login Page */
+  .login-container {
+    flex-direction: column;
+    width: 95%;
+    height: auto;
+    margin: 20px;
+  }
+
+  .login-left, .login-right {
+    flex: none;
+    width: 100%;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .login-left img {
+    width: 150px;
+  }
+
+  .login-right h1 {
+    font-size: 22px;
+  }
+
+  .form-control {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .btn-login {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Registration Form */
+  .form-container {
+    width: 95%;
+    padding: 20px;
+    margin: 20px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+  }
+
+  td {
+    display: block;
+    width: 100%;
+    padding: 6px 0;
+  }
+
+  .td-gap-right {
+    padding-right: 0;
+  }
+
+  input, select {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  input[type="checkbox"] {
+    margin-left: 0;
+  }
+
+  .submit-btn,
+  .resend-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  #otp {
+    font-size: 14px;
+    letter-spacing: 6px;
+  }
+}
+
   </style>
 </head>
 <body>
