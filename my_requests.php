@@ -40,7 +40,7 @@ $update_stmt = $pdo->prepare("
 $update_stmt->execute([$user_id]);
 
 $permits = [
-    'New Barangay Permit' => 'barangay_clearance',
+    'Barangay Clearance' => 'barangay_clearance',
     'Business Permit' => 'business_permit',
     'Business Permit Renewal' => 'business_permit_renewal',
     'Indigency' => 'indigency',

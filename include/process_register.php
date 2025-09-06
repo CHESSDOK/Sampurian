@@ -43,30 +43,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    // Upload picture
+    // =======================================
+    // Create folder for the user
+    // =======================================
+    $folderName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $l_name . "_" . $f_name . "_" . $m_name);
+    $target_dir = "uploads/" . $folderName . "/";
+    if (!is_dir($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+
+    // Upload picture (if provided)
     $picture_name = "";
     if (isset($_FILES['picture']) && $_FILES['picture']['error'] == 0) {
-        $target_dir = "uploads/";
-        if (!is_dir($target_dir)) mkdir($target_dir);
-        $picture_name = basename($_FILES["picture"]["name"]);
-        $target_file = $target_dir . time() . "_" . $picture_name;
-        move_uploaded_file($_FILES["picture"]["tmp_name"], $target_file);
-        $picture_name = $target_file;
+        $fileName = time() . "_" . basename($_FILES["picture"]["name"]);
+        $target_file = $target_dir . $fileName;
+        $fileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+        $allowedTypes = ["jpg", "jpeg", "png", "gif"];
+
+        if (in_array($fileType, $allowedTypes)) {
+            if (move_uploaded_file($_FILES["picture"]["tmp_name"], $target_file)) {
+                $picture_name = "uploads/" . $folderName . "/" . $fileName;
+            }
+        }
     }
 
     // Generate OTP
     $otp_code = rand(100000, 999999);
     $otp_expiry = date("Y-m-d H:i:s", strtotime("+5 minutes"));
-    
+
     // Insert user with OTP (not verified yet)
-    $stmt = $db->prepare("INSERT INTO users (email, user_password, f_name, m_name, l_name, birthday, contact, marriage_status, gender, address, picture, otp_code, otp_expiry) 
+    $stmt = $db->prepare("INSERT INTO users 
+        (email, user_password, f_name, m_name, l_name, birthday, contact, marriage_status, gender, address, picture, otp_code, otp_expiry) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("sssssssssssss", $email, $hashed_password, $f_name, $m_name, $l_name, $birthday, $contact, $marriage_status, $gender, $address, $picture_name, $otp_code, $otp_expiry);
 
     if ($stmt->execute()) {
         // Send OTP email using PHPMailer
         $mail = new PHPMailer(true);
-        
+
         try {
             // Server settings
             $mail->isSMTP();
@@ -76,17 +90,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->Password   = 'swnr plwx zscz yxce'; // Gmail app password
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
-            
+
             // Recipients
-            $mail->setFrom('ict1mercado.cdlb@gmail.com', 'SAMPURIAN');
+            $mail->setFrom('ict1mercado.cdlb@gmail.com', 'SAMPURIHAN');
             $mail->addAddress($email);
-            
+
             // Content
             $mail->isHTML(true);
             $mail->Subject = 'Your OTP Code for Registration';
             $mail->Body    = 'Your OTP code is: <b>' . $otp_code . '</b><br>This code will expire in 5 minutes.';
             $mail->AltBody = 'Your OTP code is: ' . $otp_code . '. This code will expire in 5 minutes.';
-            
+
             $mail->send();
 
             // ======================
@@ -102,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $msg = new \ClickSend\Model\SmsMessage();
             $msg->setBody("Your OTP code is: $otp_code. This code will expire in 5 minutes.");
-            $msg->setTo($contact);  // make sure $contact contains a valid phone number with country code (e.g., +639XXXXXXXXX)
+            $msg->setTo($contact);  // must be in format +63XXXXXXXXXX
             $msg->setSource("php");
 
             $sms_messages = new \ClickSend\Model\SmsMessageCollection();

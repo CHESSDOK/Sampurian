@@ -1,176 +1,265 @@
 <?php
 require_once('../vendor/autoload.php'); 
-// ❌ remove: use TCPDF; (not namespaced)
 
 function generatePDF($type, $data) {
     $pdf = new \TCPDF();
-    $pdf->SetMargins(20, 20, 20);
+    $pdf->SetMargins(0, 0, 0);
     $pdf->AddPage();
+
+    // ---------------- Template Map (form images) ----------------
+    $templateMap = [
+        'business_permit'         =>'../templates/business_permit.png',
+        'business_permit_renewal' =>'../templates/business_permit_renewal.png',
+        'indigency'               =>'../templates/indigency.png',
+        'barangay_clearance'      =>'../templates/barangay_clearance.png',
+        'animal_bite'             =>'../templates/animal_bite.png',
+    ];
+
+    if (!isset($templateMap[$type])) {
+        throw new Exception("No template found for type: $type");
+    }
+
+    // ---------------- Add background image (A4 size 210x297mm) ----------------
+    $pdf->Image($templateMap[$type], 0, 0, 210, 297);
+
+    // ---------------- Set font ----------------
     $pdf->SetFont('times', '', 12);
 
-    $html = '';
+    // ---------------- Fill-in fields ----------------
+    if ($type === "business_permit" || $type === "business_permit_renewal") {
+        $pdf->SetXY(50, 100); 
+        $pdf->Cell(100, 10, $data['name'], 0, 1, 'C');
 
-     // ---------------- Renew BUSINESS PERMIT ----------------
-    if ($type === "business_permit_renewal") {
-        $html = '
-        <div style="text-align:center;">
-            <img src="../assets/logo-left.png" height="60" style="float:left;">
-            <img src="../assets/logo-right.png" height="60" style="float:right;">
-            <h4>REPUBLIKA NG PILIPINAS<br>LALAWIGAN NG LAGUNA<br>LUNGSOD NG CALAMBA<br>BARANGAY SAMPIRUHAN</h4>
-            <h3 style="color:#000080;">Barangay Business Clearance</h3>
-        </div>
-        <br><br>
-        <p>To whom it may concern:</p>
-        <p style="text-align:justify;">
-            Pursuant to the provisions of Barangay Tax Ordinance No.1, series of 1995 as amended, 
-            this CERTIFICATE is hereby granted to:
-        </p>
-        <h2 style="text-align:center;">'.htmlspecialchars($data['name']).'</h2>
-        <p style="text-align:center;"><i>(Name of Applicant)</i></p>
-        <h3 style="text-align:center;">'.htmlspecialchars($data['kind_of_establishment']).'</h3>
-        <p style="text-align:center;"><i>(Name/Kind of Establishment)</i></p>
-        <p style="text-align:center;">Resident of '.htmlspecialchars($data['address']).' to operate and maintain</p>
-        <h3 style="text-align:center;">'.htmlspecialchars($data['nature_of_business']).'</h3>
-        <p style="text-align:center;"><i>(Nature of Business)</i></p>
-        <p style="text-align:justify;">
-            at Barangay Sampiruhan, Calamba City, subject however to the provisions of existing 
-            laws, ordinances, rules, and regulations governing the operation and maintenance of the same.
-        </p>
-        <br><br>
-        <p>Date Issued: '.date('F d, Y').'</p>
-        <br><br><br>
-        <p style="text-align:right;">
-            <b>Iggs. James Philip C. Dumalaon</b><br>
-            <i>Punong Barangay</i>
-        </p>';
+        $pdf->SetXY(45, 115); 
+        $pdf->Cell(100, 10, $data['kind_of_establishment'], 0, 1, 'C');
+
+        $pdf->SetXY(50, 128); 
+        $pdf->Cell(100, 10, $data['address'], 0, 1, 'C');
+
+        $pdf->SetXY(50, 145); 
+        $pdf->Cell(100, 10, $data['nature_of_business'], 0, 1, 'C');
+
     }
 
-    // ---------------- BUSINESS PERMIT ----------------
-    if ($type === "business_permit") {
-        $html = '
-        <div style="text-align:center;">
-            <img src="../assets/logo-left.png" height="60" style="float:left;">
-            <img src="../assets/logo-right.png" height="60" style="float:right;">
-            <h4>REPUBLIKA NG PILIPINAS<br>LALAWIGAN NG LAGUNA<br>LUNGSOD NG CALAMBA<br>BARANGAY SAMPIRUHAN</h4>
-            <h3 style="color:#000080;">Barangay Business Clearance</h3>
-        </div>
-        <br><br>
-        <p>To whom it may concern:</p>
-        <p style="text-align:justify;">
-            Pursuant to the provisions of Barangay Tax Ordinance No.1, series of 1995 as amended, 
-            this CERTIFICATE is hereby granted to:
-        </p>
-        <h2 style="text-align:center;">'.htmlspecialchars($data['name']).'</h2>
-        <p style="text-align:center;"><i>(Name of Applicant)</i></p>
-        <h3 style="text-align:center;">'.htmlspecialchars($data['kind_of_establishment']).'</h3>
-        <p style="text-align:center;"><i>(Name/Kind of Establishment)</i></p>
-        <p style="text-align:center;">Resident of '.htmlspecialchars($data['address']).' to operate and maintain</p>
-        <h3 style="text-align:center;">'.htmlspecialchars($data['nature_of_business']).'</h3>
-        <p style="text-align:center;"><i>(Nature of Business)</i></p>
-        <p style="text-align:justify;">
-            at Barangay Sampiruhan, Calamba City, subject however to the provisions of existing 
-            laws, ordinances, rules, and regulations governing the operation and maintenance of the same.
-        </p>
-        <br><br>
-        <p>Date Issued: '.date('F d, Y').'</p>
-        <br><br><br>
-        <p style="text-align:right;">
-            <b>Iggs. James Philip C. Dumalaon</b><br>
-            <i>Punong Barangay</i>
-        </p>';
-    }
-
-    // ---------------- INDIGENCY ----------------
     if ($type === "indigency") {
-        $html = '
-        <div style="text-align:center;">
-            <img src="../assets/logo-left.png" height="60" style="float:left;">
-            <img src="../assets/logo-right.png" height="60" style="float:right;">
-            <h4>REPUBLIKA NG PILIPINAS<br>LALAWIGAN NG LAGUNA<br>LUNGSOD NG CALAMBA<br>BARANGAY SAMPIRUHAN</h4>
-            <h3 style="color:#000080;">CERTIFICATE OF INDIGENCY</h3>
-        </div>
-        <br><br>
-        <p>Sa Kinauukulan,</p>
-        <p style="text-align:justify;">
-            Ito ay nagpapatunay na si <b>'.htmlspecialchars($data['name']).'</b>, '.$data['age'].' taong gulang, 
-            naninirahan sa '.htmlspecialchars($data['address']).', Barangay Sampiruhan, Lungsod ng Calamba, Lalawigan ng Laguna 
-            ay walang sapat na pinagkakakitaan at nabibilang sa mahihirap na pamilya sa aming Barangay.
-        </p>
-        <p style="text-align:justify;">
-            Ang pagpapatunay na ito ay ipinagkaloob ng Sangguniang Barangay ng Sampiruhan ayon sa kanyang kahilingan upang magsilbing 
-            katibayan at magamit sa anumang pangangailangan at kapakinabangan legal.
-        </p>
-        <br><br>
-        <table width="100%">
-            <tr>
-                <td width="50%">Lagda ng humihiling:<br><br>__________________________</td>
-                <td width="50%" align="right">Pinagtibay ni:<br><br><b>Iggs. James Philip C. Dumalaon</b><br><i>Punong Barangay</i></td>
-            </tr>
-        </table>
-        <br><br>
-        <small>
-            CTC No.: ____________________<br>
-            Date issued: '.date('F d, Y').'<br>
-            Valid for : 6 months<br>
-            Issued by : _______________<br>
-            <i>*Not Valid w/o Dry Seal</i>
-        </small>';
+        // Compute age from birthdate if provided
+        $age = '';
+        if (!empty($data['birthday'])) {
+            try {
+                $birthDate = new DateTime($data['birthday']);
+                $today     = new DateTime();
+                $age       = $today->diff($birthDate)->y;
+            } catch (Exception $e) {
+                $age = '';
+            }
+        }
+
+        // Insert profile picture if provided
+        if (!empty($data['picture']) && file_exists($data['picture'])) {
+            $pdf->Image(
+                $data['picture'],
+                155, 77,   // x, y
+                23, 23,   // width, height
+                '',       // type autodetect
+                '', '', false, 300, '', false, false, 0
+            );
+        }
+
+        // Name
+        $pdf->SetXY(77, 103);  
+        $pdf->Cell(120, 10, $data['name'], 0, 1);
+
+        // Age (computed)
+        $pdf->SetXY(143, 103);
+        $pdf->Cell(120, 10, ($age ? $age : "00"), 0, 1);
+
+        // Address
+        $pdf->SetXY(50, 113);
+        $pdf->MultiCell(120, 10, $data['address'], 0, 'L');
     }
 
-    // ---------------- BARANGAY CLEARANCE ----------------
     if ($type === "barangay_clearance") {
-        $html = '
-        <div style="text-align:center;">
-            <img src="../assets/logo-left.png" height="60" style="float:left;">
-            <img src="../assets/logo-right.png" height="60" style="float:right;">
-            <h4>REPUBLIKA NG PILIPINAS<br>LALAWIGAN NG LAGUNA<br>LUNGSOD NG CALAMBA<br>BARANGAY SAMPIRUHAN</h4>
-            <h3 style="color:#000080;">BARANGAY CLEARANCE</h3>
-        </div>
-        <br><br>
-        <p>To whom it may concern:</p>
-        <p style="text-align:justify;">
-            This is to certify that <b>'.htmlspecialchars($data['name']).'</b>, of legal age, residing at '.htmlspecialchars($data['address']).',
-            is a resident of Barangay Sampiruhan, Calamba City.
-        </p>
-        <p style="text-align:justify;">
-            This certification is issued upon request of the above-named person for whatever legal purpose it may serve him/her best.
-        </p>
-        <br><br>
-        <p>Issued this '.date('jS').' day of '.date('F Y').' at Barangay Sampiruhan, Calamba City.</p>
-        <br><br><br>
-        <p style="text-align:right;">
-            <b>Iggs. James Philip C. Dumalaon</b><br>
-            <i>Punong Barangay</i>
-        </p>';
+
+        // Compute age from birthdate if provided
+        $age = '';
+        if (!empty($data['birthday'])) {
+            try {
+                $birthDate = new DateTime($data['birthday']);
+                $today     = new DateTime();
+                $age       = $today->diff($birthDate)->y;
+            } catch (Exception $e) {
+                $age = '';
+            }
+        }
+
+        // Insert profile picture if provided
+        if (!empty($data['picture']) && file_exists($data['picture'])) {
+            $pdf->Image(
+                $data['picture'],
+                149, 78,   // x, y
+                23, 26,   // width, height
+                '',       // type autodetect
+                '', '', false, 300, '', false, false, 0
+            );
+        }
+
+        $pdf->SetXY(85, 108);
+        $pdf->Cell(120, 10, $data['name'], 0, 1);
+
+        $pdf->SetXY(55, 118);
+        $pdf->Cell(120, 10, ($age ? $age : "00"), 0, 1);
+
+        $pdf->SetXY(53, 130);
+        $pdf->MultiCell(120, 10, $data['address'], 0, 'L');
+
+        $pdf->SetXY(100, 139);
+        $pdf->Cell(100, 10,  $data['years_stay_in_barangay'], 0, 1, 'L');
+
+        $pdf->SetXY(42, 167);
+        $pdf->Cell(100, 10,  $data['purpose'], 0, 1, 'L');
+
     }
 
-    // ---------------- ANIMAL BITE REPORT ----------------
     if ($type === "animal_bite") {
-        $html = '
-        <div style="text-align:center;">
-            <img src="../assets/logo-left.png" height="60" style="float:left;">
-            <img src="../assets/logo-right.png" height="60" style="float:right;">
-            <h4>REPUBLIKA NG PILIPINAS<br>LALAWIGAN NG LAGUNA<br>LUNGSOD NG CALAMBA<br>BARANGAY SAMPIRUHAN</h4>
-            <h3 style="color:#000080;">ANIMAL BITE REPORT</h3>
-        </div>
-        <br><br>
-        <p>This is to certify that a report has been filed regarding an <b>Animal Bite Incident</b>.</p>
-        <p><b>Victim:</b> '.htmlspecialchars($data['name']).'</p>
-        <p><b>Address:</b> '.htmlspecialchars($data['address']).'</p>
-        <p><b>Details:</b> '.$data['incident_details'].'</p>
-        <br><br>
-        <p>Issued this '.date('jS').' day of '.date('F Y').' at Barangay Sampiruhan, Calamba City.</p>
-        <br><br><br>
-        <p style="text-align:right;">
-            <b>Iggs. James Philip C. Dumalaon</b><br>
-            <i>Punong Barangay</i>
-        </p>';
+        $pdf->SetFont('dejavusans', '', 10); // make sure checkmark is supported
+
+        // Full Name
+        $pdf->SetXY(55, 80);
+        $pdf->Cell(120, 10, $data['full_nameA'], 0, 1);
+
+        // Guardian
+        $pdf->SetXY(100, 95);
+        $pdf->Cell(120, 10, $data['guardian'], 0, 1);
+
+        // Address
+        $pdf->SetXY(55, 113);
+        $pdf->MultiCell(120, 10, $data['address'], 0, 'L');
+
+        // Age
+        $pdf->SetXY(50, 118);
+        $pdf->Cell(120, 10, $data['age'], 0, 1);
+
+        // DOB
+        $pdf->SetXY(80, 118);
+        $pdf->Cell(120, 10, $data['dob'], 0, 1);
+
+
+
+        // =============================
+        // GENDER (Male / Female checkbox)
+        // =============================
+        if ($data['gender'] === "Male") {
+            $pdf->SetXY(120, 118); // adjust to your "Male" checkbox
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        } elseif ($data['gender'] === "Female") {
+            $pdf->SetXY(135, 118); // adjust to your "Female" checkbox
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        }
+
+        // Contact
+        $pdf->SetXY(60, 130);
+        $pdf->Cell(120, 10, $data['contact'], 0, 1);
+
+        // Bite Location
+        $pdf->SetXY(60, 150);
+        $pdf->MultiCell(120, 10, $data['bite_location'], 0, 'L');
+
+        // Body Part
+        $pdf->SetXY(60, 160);
+        $pdf->MultiCell(120, 10, $data['body_part'], 0, 'L');
+
+        // Washed
+        $pdf->SetXY(60, 170);
+        $pdf->Cell(120, 10, $data['washed'], 0, 1);
+
+        // Bite Date
+        $pdf->SetXY(60, 180);
+        $pdf->Cell(120, 10, $data['bite_date'], 0, 1);
+
+        // Animal Description
+        $pdf->SetXY(60, 190);
+        $pdf->MultiCell(120, 10, $data['animal_description'], 0, 'L');
+
+        // Color
+        $pdf->SetXY(60, 200);
+        $pdf->Cell(120, 10, $data['color'], 0, 1);
+
+        // Marks
+        $pdf->SetXY(60, 210);
+        $pdf->MultiCell(120, 10, $data['marks'], 0, 'L');
+
+        // =============================
+        // Animal Condition (Nakakulong / Nakatali / Gala)
+        // =============================
+        if (!empty($data['animal_condition'])) {
+            foreach ((array)$data['animal_condition'] as $cond) {
+                switch ($cond) {
+                    case "Nakakulong":
+                        $pdf->SetXY(90, 220); // coords for Nakakulong
+                        $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+                        break;
+                    case "Nakatali":
+                        $pdf->SetXY(110, 220); // coords for Nakatali
+                        $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+                        break;
+                    case "Gala":
+                        $pdf->SetXY(130, 220); // coords for Gala
+                        $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+                        break;
+                }
+            }
+        }
+
+        // =============================
+        // Registered (Oo / Hindi)
+        // =============================
+        if ($data['registered'] === "Oo") {
+            $pdf->SetXY(90, 230); // coords for Oo
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        } else {
+            $pdf->SetXY(110, 230); // coords for Hindi
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        }
+
+        // =============================
+        // Other Animals (Meron / Wala)
+        // =============================
+        if ($data['other_animals'] === "Meron") {
+            $pdf->SetXY(90, 240); // coords for Meron
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        } else {
+            $pdf->SetXY(110, 240); // coords for Wala
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        }
+
+        // =============================
+        // Dog Condition (Malusog / Bagong panganak / May sakit)
+        // =============================
+        switch ($data['dog_condition']) {
+            case "Malusog":
+                $pdf->SetXY(90, 250);
+                $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+                break;
+            case "Bagong panganak":
+                $pdf->SetXY(110, 250);
+                $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+                break;
+            case "May sakit":
+                $pdf->SetXY(130, 250);
+                $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+                break;
+        }
+
+        // Owner Name
+        $pdf->SetXY(60, 260);
+        $pdf->Cell(120, 10, $data['owner_name'], 0, 1);
+
+        // Date Today
+        $pdf->SetXY(40, 280);
+        $pdf->Cell(100, 10, date('jS \of F Y'), 0, 1, 'L');
     }
 
-    // ---------- Write and Save ----------
-    $pdf->writeHTML($html, true, false, true, false, '');
-
-    // ✅ Build absolute + relative paths
+    // ---------------- Save file ----------------
     $basePath = __DIR__ . "/../uploads/";
     $userFolder = $basePath . preg_replace('/[^A-Za-z0-9_\-]/', '_', $data['name']);
     $reqFolder  = $userFolder . "/" . $type;
@@ -185,5 +274,5 @@ function generatePDF($type, $data) {
 
     $pdf->Output($absolutePath, 'F');
 
-    return $relativePath; // ✅ return relative path for DB
+    return $relativePath;
 }

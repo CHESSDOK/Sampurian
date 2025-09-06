@@ -33,31 +33,75 @@ $table = $map[$type];
 switch ($type) {
     case 'business_permit':
         $userSql = "SELECT u.id as uid, u.f_name, u.m_name, u.l_name, u.email, u.contact, u.address,
+                           u.birthday, u.picture,
                            bp.nature_of_business, bp.kind_of_establishment
                     FROM business_permit bp
                     JOIN users u ON u.id = bp.user_id
                     WHERE bp.id = :id";
         break;
+
     case 'business_permit_renewal':
         $userSql = "SELECT u.id as uid, u.f_name, u.m_name, u.l_name, u.email, u.contact, u.address,
-                           bp.nature_of_business, bp.name_kind_of_establishment
+                           u.birthday, u.picture,
+                           bp.nature_of_business, bp.name_kind_of_establishment AS kind_of_establishment
                     FROM business_permit_renewal bp
                     JOIN users u ON u.id = bp.user_id
                     WHERE bp.id = :id";
         break;
+
     case 'barangay_clearance':
-    case 'indigency':
-    case 'animal_bite':
-        $userSql = "SELECT u.id as uid, u.f_name, u.m_name, u.l_name, u.email, u.contact, u.address
-                    FROM $table bp
+         $userSql = "SELECT u.id as uid, u.f_name, u.m_name, u.l_name, u.email, u.contact, u.address,
+                           u.birthday, u.picture, bp.years_stay_in_barangay, bp.purpose
+                    FROM barangay_clearance bp
                     JOIN users u ON u.id = bp.user_id
                     WHERE bp.id = :id";
         break;
+    case 'indigency':
+        $userSql = "SELECT u.id as uid, u.f_name, u.m_name, u.l_name, u.email, u.contact, u.address,
+                           u.birthday, u.picture
+                    FROM indigency bp
+                    JOIN users u ON u.id = bp.user_id
+                    WHERE bp.id = :id";
+        break;
+
+case 'animal_bite':
+    $userSql = "SELECT 
+                    u.id AS uid,
+                    u.email,
+                    u.f_name,
+                    u.m_name,
+                    u.l_name,
+                    bp.last_name,
+                    bp.first_name,
+                    bp.middle_name,
+                    bp.dob,
+                    bp.age,
+                    bp.gender,
+                    bp.contact,
+                    bp.guardian,
+                    bp.bite_location,
+                    bp.body_part,
+                    bp.washed,
+                    bp.bite_date,
+                    bp.animal_description,
+                    bp.color,
+                    bp.marks,
+                    bp.animal_condition,
+                    bp.registered,
+                    bp.other_animals,
+                    bp.dog_condition,
+                    bp.owner_name
+                FROM animal_bite_reports bp
+                JOIN users u ON u.id = bp.user_id
+                WHERE bp.id = :id";
+    break;
+
     default:
         http_response_code(400);
         echo "Invalid request type";
         exit;
 }
+
 
 $userStmt = $pdo->prepare($userSql);
 $userStmt->execute([':id' => $id]);
@@ -142,15 +186,66 @@ if (!empty($row['contact'])) {
 
 // --- SEND EMAIL + PDF if approved ---
 if ($status === "Approved") {
+    if ($type === "animal_bite") {
+        // ---- Animal Bite style names ----
+        $middleInitial = '';
+        if (!empty($row['middle_name'])) {
+            $middleInitial = strtoupper(substr($row['middle_name'], 0, 1)) . ".";
+        }
+
+        $fullName  = trim($row['first_name'] . " " . $middleInitial . " " . $row['last_name']);
+        $fullNameA = trim($row['last_name'] . ", " . $row['first_name'] . " " . $row['middle_name']);
+    } else {
+        // ---- All other requests ----
+        $middleInitial = '';
+        if (!empty($row['m_name'])) {
+            $middleInitial = strtoupper(substr($row['m_name'], 0, 1)) . ".";
+        }
+
+        $fullName  = trim($row['f_name'] . " " . $middleInitial . " " . $row['l_name']);
+        $fullNameA = ''; // not used
+    }
+
     $pdfData = [
         'id' => $id,
-        'name' => $row['f_name']." ".$row['m_name']." ".$row['l_name'],
-        'address' => $row['address'],
-        'age' => $row['age'] ?? '___',
+        'name' => $fullName,          // for indigency, clearance, business permits
+        'full_nameA' => $fullNameA,   // for animal bite only
+
+        // shared
+        'address' => $row['address'] ?? '',
+        'birthday' => $row['birthday'] ?? ($row['dob'] ?? ''),
+        'picture' => !empty($row['picture']) 
+            ? ("../include/".$row['picture']) 
+            : '../user-placeholder.png',
+
+        // business
         'nature_of_business' => $row['nature_of_business'] ?? '',
         'kind_of_establishment' => $row['kind_of_establishment'] ?? '',
-        'incident_details' => $row['incident_details'] ?? ''
+
+        // clearance/indigency
+        'years_stay_in_barangay' => $row['years_stay_in_barangay'] ?? '',
+        'purpose' => $row['purpose'] ?? '', 
+
+        // animal bite
+        'dob'               => $row['dob'] ?? '',
+        'age'               => $row['age'] ?? '',
+        'gender'            => $row['gender'] ?? '',
+        'contact'           => $row['contact'] ?? '',
+        'guardian'          => $row['guardian'] ?? '',
+        'bite_location'     => $row['bite_location'] ?? '',
+        'body_part'         => $row['body_part'] ?? '',
+        'washed'            => $row['washed'] ?? '',
+        'bite_date'         => $row['bite_date'] ?? '',
+        'animal_description'=> $row['animal_description'] ?? '',
+        'color'             => $row['color'] ?? '',
+        'marks'             => $row['marks'] ?? '',
+        'animal_condition'  => $row['animal_condition'] ?? '',
+        'registered'        => $row['registered'] ?? '',
+        'other_animals'     => $row['other_animals'] ?? '',
+        'dog_condition'     => $row['dog_condition'] ?? '',
+        'owner_name'        => $row['owner_name'] ?? ''
     ];
+
 
     $attachment = generatePDF($type, $pdfData);
 

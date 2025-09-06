@@ -257,14 +257,6 @@ if (!empty($user['birthday'])) {
                     <input type="text" class="form-control" name="purpose" required>
                 </div>
             </div>
-            <div class="mb-4">
-                <label class="form-label">Required Documents</label>
-                <ul class="list-unstyled">
-                    <li>1x1 Picture
-                        <input type="file" class="form-control mt-1" name="picture" required>
-                    </li>
-                </ul>
-            </div>
 
                <div class="mb-4">
                     <label class="form-label">Select Payment Method</label>

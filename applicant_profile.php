@@ -13,18 +13,44 @@ $user_id = $_SESSION['user_id'];
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $f_name = $_POST['f_name'];
     $l_name = $_POST['l_name'];
+    $m_name = $_POST['m_name'];
+    $ms = $_POST['ms'];
+    $adds = $_POST['adds'];
     $dob = $_POST['dob'];
     $email = $_POST['email'];
     $contact = $_POST['contact'];
 
-    // Optional: hash password (uncomment if passwords are stored hashed)
-    // $password = password_hash($password, PASSWORD_DEFAULT);
+    // Generate folder name (sanitize to avoid special chars in folder names)
+    $folderName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $l_name . "_" . $f_name . "_" . $m_name);
+    $targetDir = "include/uploads/" . $folderName . "/";
 
-    $stmt = $pdo->prepare("UPDATE users SET f_name = ?, l_name = ?, birthday = ?, email = ?, contact = ? WHERE id = ?");
-    $stmt->execute([$f_name, $l_name, $dob, $email, $contact, $user_id]);
+    // Create folder if it doesn’t exist
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0777, true);
+    }
+
+    if (!empty($_FILES['picture']['name'])) {
+        $fileName = time() . "_" . basename($_FILES["picture"]["name"]);
+        $targetFilePath = $targetDir . $fileName;
+
+        $fileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
+        $allowedTypes = ["jpg", "jpeg", "png", "gif"];
+
+        if (in_array($fileType, $allowedTypes)) {
+            if (move_uploaded_file($_FILES["picture"]["tmp_name"], $targetFilePath)) {
+                // Save relative path for DB
+                $picture = "uploads/" . $folderName . "/" . $fileName;
+            }
+        }
+    }
+
+    // Update user info including picture
+    $stmt = $pdo->prepare("UPDATE users SET f_name = ?, l_name = ?, m_name = ?, birthday = ?, marriage_status = ?, address = ?, email = ?, contact = ?, picture = ? WHERE id = ?");
+    $stmt->execute([$f_name, $l_name, $m_name, $dob, $ms, $adds, $email, $contact, $picture, $user_id]);
 
     $success_message = "Profile updated successfully!";
 }
+
 
 // Fetch user details
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
@@ -226,34 +252,54 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                         <p class="success-msg"><?php echo $success_message; ?></p>
                     <?php endif; ?>
 
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label for="f_name" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="f_name" name="f_name" required value="<?php echo htmlspecialchars($user['f_name']); ?>">
-                        </div>
+                        <form method="POST" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="f_name" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="f_name" name="f_name" required value="<?php echo htmlspecialchars($user['f_name']); ?>">
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="l_name" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="l_name" name="l_name" required value="<?php echo htmlspecialchars($user['l_name']); ?>">
-                        </div>
+                            <div class="mb-3">
+                                <label for="f_name" class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="m_name" name="m_name" required value="<?php echo htmlspecialchars($user['m_name']); ?>">
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="dob" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control" id="dob" name="dob" required value="<?php echo htmlspecialchars($user['birthday']); ?>">
-                        </div>
+                            <div class="mb-3">
+                                <label for="l_name" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="l_name" name="l_name" required value="<?php echo htmlspecialchars($user['l_name']); ?>">
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" required value="<?php echo htmlspecialchars($user['email']); ?>">
-                        </div>
+                            <div class="mb-3">
+                                <label for="dob" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="dob" name="dob" required value="<?php echo htmlspecialchars($user['birthday']); ?>">
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="contact" class="form-label">Contact Number</label>
-                            <input type="text" class="form-control" id="contact" name="contact" required value="<?php echo htmlspecialchars($user['contact']); ?>">
-                        </div>
+                            <div class="mb-3">
+                                <label for="dob" class="form-label">Marriage Status</label>
+                                <input type="text" class="form-control" id="ms" name="ms" required value="<?php echo htmlspecialchars($user['marriage_status']); ?>">
+                            </div>
 
-                        <button type="submit" class="btn btn-primary w-100">Update Profile</button>
-                    </form>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Address</label>
+                                <input type="text" class="form-control" id="adds" name="adds" required value="<?php echo htmlspecialchars($user['address']); ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" required value="<?php echo htmlspecialchars($user['email']); ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="contact" class="form-label">Contact Number</label>
+                                <input type="text" class="form-control" id="contact" name="contact" required value="<?php echo htmlspecialchars($user['contact']); ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="picture" class="form-label">Profile Picture</label>
+                                <input type="file" class="form-control" id="picture" name="picture" accept="image/*">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Update Profile</button>
+                        </form>
                 </div>
             </div>
         </div>

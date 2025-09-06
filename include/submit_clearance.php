@@ -34,8 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generate unique permit ID
         $permit_id = "CLR-" . date("Ymd") . "-" . strtoupper(bin2hex(random_bytes(6)));
 
-        // File upload
-        $pic2x2 = uploadFile('picture', $upload_dir, '2x2');
 
         // Form data
         $year_stay = $_POST['year_stay'];
@@ -80,11 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Save record as pending
                 $sql = "INSERT INTO barangay_clearance (
                     permit_id, years_stay_in_barangay, purpose,
-                    attachment,
                     user_id, payment_type, created_at, status
                 ) VALUES (
                     :permit_id, :year_stay, :purpose,
-                    :pic2x2,
                     :user_id, :payment_type, NOW(), 'pending'
                 )";
                 $stmt = $pdo->prepare($sql);
@@ -92,7 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':permit_id' => $permit_id,
                     ':year_stay' => $year_stay,
                     ':purpose' => $purpose,
-                    ':pic2x2' => $pic2x2,
                     ':user_id' => $user_id,
                     ':payment_type' => $payment_type,
                 ]);
@@ -116,11 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ✅ Cash payment (direct insert)
             $sql = "INSERT INTO barangay_clearance (
                 permit_id, years_stay_in_barangay, purpose,
-                attachment,
                 user_id, payment_type, created_at, status
             ) VALUES (
                 :permit_id, :year_stay, :purpose,
-                :pic2x2,
                 :user_id, :payment_type, NOW(), 'unpaid'
             )";
             $stmt = $pdo->prepare($sql);
@@ -128,7 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':permit_id' => $permit_id,
                 ':year_stay' => $year_stay,
                 ':purpose' => $purpose,
-                ':pic2x2' => $pic2x2,
                 ':user_id' => $user_id,
                 ':payment_type' => $payment_type,
             ]);
