@@ -124,68 +124,71 @@ function generatePDF($type, $data) {
         $pdf->SetFont('dejavusans', '', 10); // make sure checkmark is supported
 
         // Full Name
-        $pdf->SetXY(55, 80);
+        $pdf->SetXY(55, 79);
         $pdf->Cell(120, 10, $data['full_nameA'], 0, 1);
 
         // Guardian
-        $pdf->SetXY(100, 95);
+        $pdf->SetXY(100, 90);
         $pdf->Cell(120, 10, $data['guardian'], 0, 1);
 
-        // Address
-        $pdf->SetXY(55, 113);
+                // Address
+        $pdf->SetXY(50, 99);
         $pdf->MultiCell(120, 10, $data['address'], 0, 'L');
 
         // Age
-        $pdf->SetXY(50, 118);
+        $pdf->SetXY(45, 101);
         $pdf->Cell(120, 10, $data['age'], 0, 1);
 
         // DOB
-        $pdf->SetXY(80, 118);
+        $pdf->SetXY(91, 101);
         $pdf->Cell(120, 10, $data['dob'], 0, 1);
-
-
 
         // =============================
         // GENDER (Male / Female checkbox)
         // =============================
         if ($data['gender'] === "Male") {
-            $pdf->SetXY(120, 118); // adjust to your "Male" checkbox
+            $pdf->SetXY(143, 101); // adjust to your "Male" checkbox
             $pdf->Cell(10, 10, '✓', 0, 0, 'C');
         } elseif ($data['gender'] === "Female") {
-            $pdf->SetXY(135, 118); // adjust to your "Female" checkbox
+            $pdf->SetXY(163, 101); // adjust to your "Female" checkbox
             $pdf->Cell(10, 10, '✓', 0, 0, 'C');
         }
 
         // Contact
-        $pdf->SetXY(60, 130);
+        $pdf->SetXY(60, 107);
         $pdf->Cell(120, 10, $data['contact'], 0, 1);
 
         // Bite Location
-        $pdf->SetXY(60, 150);
+        $pdf->SetXY(130, 125);
         $pdf->MultiCell(120, 10, $data['bite_location'], 0, 'L');
 
         // Body Part
-        $pdf->SetXY(60, 160);
+        $pdf->SetXY(100, 130);
         $pdf->MultiCell(120, 10, $data['body_part'], 0, 'L');
 
-        // Washed
-        $pdf->SetXY(60, 170);
-        $pdf->Cell(120, 10, $data['washed'], 0, 1);
-
         // Bite Date
-        $pdf->SetXY(60, 180);
+        $pdf->SetXY(129, 133);
         $pdf->Cell(120, 10, $data['bite_date'], 0, 1);
 
+        // Washed
+        if ($data['washed'] === "Oo") {
+            $pdf->SetXY(60, 133); // adjust to your "Male" checkbox
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        } elseif ($data['washed'] === "Hindi") {
+            $pdf->SetXY(80, 133); // adjust to your "Female" checkbox
+            $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+        }
+
         // Animal Description
-        $pdf->SetXY(60, 190);
-        $pdf->MultiCell(120, 10, $data['animal_description'], 0, 'L');
+        $pdf->SetXY(108, 141);
+        $pdf->MultiCell(123, 10, $data['animal_description'], 0, 'L');
 
         // Color
-        $pdf->SetXY(60, 200);
+        $pdf->SetXY(47, 144);
         $pdf->Cell(120, 10, $data['color'], 0, 1);
 
         // Marks
-        $pdf->SetXY(60, 210);
+        $pdf->SetXY(98, 147);
         $pdf->MultiCell(120, 10, $data['marks'], 0, 'L');
 
         // =============================
@@ -194,16 +197,20 @@ function generatePDF($type, $data) {
         if (!empty($data['animal_condition'])) {
             foreach ((array)$data['animal_condition'] as $cond) {
                 switch ($cond) {
-                    case "Nakakulong":
-                        $pdf->SetXY(90, 220); // coords for Nakakulong
+                    case '["Nakakulong"]':
+                        $pdf->SetXY(50, 150); // coords for Nakakulong
                         $pdf->Cell(10, 10, '✓', 0, 0, 'C');
                         break;
-                    case "Nakatali":
-                        $pdf->SetXY(110, 220); // coords for Nakatali
+                    case '["Nakatali"]':
+                        $pdf->SetXY(78, 150); // coords for Nakatali
                         $pdf->Cell(10, 10, '✓', 0, 0, 'C');
                         break;
-                    case "Gala":
-                        $pdf->SetXY(130, 220); // coords for Gala
+                    case '["Bakuran"]':
+                        $pdf->SetXY(130, 150); // coords for Gala
+                        $pdf->Cell(10, 10, '✓', 0, 0, 'C');
+                        break;
+                    case '["Gala"]':
+                        $pdf->SetXY(145, 150); // coords for Gala
                         $pdf->Cell(10, 10, '✓', 0, 0, 'C');
                         break;
                 }
@@ -214,10 +221,10 @@ function generatePDF($type, $data) {
         // Registered (Oo / Hindi)
         // =============================
         if ($data['registered'] === "Oo") {
-            $pdf->SetXY(90, 230); // coords for Oo
+            $pdf->SetXY(90, 160); // coords for Oo
             $pdf->Cell(10, 10, '✓', 0, 0, 'C');
         } else {
-            $pdf->SetXY(110, 230); // coords for Hindi
+            $pdf->SetXY(114, 160); // coords for Hindi
             $pdf->Cell(10, 10, '✓', 0, 0, 'C');
         }
 
@@ -225,10 +232,10 @@ function generatePDF($type, $data) {
         // Other Animals (Meron / Wala)
         // =============================
         if ($data['other_animals'] === "Meron") {
-            $pdf->SetXY(90, 240); // coords for Meron
+            $pdf->SetXY(90, 166); // coords for Meron
             $pdf->Cell(10, 10, '✓', 0, 0, 'C');
         } else {
-            $pdf->SetXY(110, 240); // coords for Wala
+            $pdf->SetXY(114, 166); // coords for Wala
             $pdf->Cell(10, 10, '✓', 0, 0, 'C');
         }
 
@@ -237,26 +244,22 @@ function generatePDF($type, $data) {
         // =============================
         switch ($data['dog_condition']) {
             case "Malusog":
-                $pdf->SetXY(90, 250);
+                $pdf->SetXY(90, 171);
                 $pdf->Cell(10, 10, '✓', 0, 0, 'C');
                 break;
             case "Bagong panganak":
-                $pdf->SetXY(110, 250);
+                $pdf->SetXY(90, 177);
                 $pdf->Cell(10, 10, '✓', 0, 0, 'C');
                 break;
             case "May sakit":
-                $pdf->SetXY(130, 250);
+                $pdf->SetXY(90, 182);
                 $pdf->Cell(10, 10, '✓', 0, 0, 'C');
                 break;
         }
 
         // Owner Name
-        $pdf->SetXY(60, 260);
+        $pdf->SetXY(110, 188);
         $pdf->Cell(120, 10, $data['owner_name'], 0, 1);
-
-        // Date Today
-        $pdf->SetXY(40, 280);
-        $pdf->Cell(100, 10, date('jS \of F Y'), 0, 1, 'L');
     }
 
     // ---------------- Save file ----------------

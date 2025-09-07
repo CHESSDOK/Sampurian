@@ -71,6 +71,7 @@ case 'animal_bite':
                     u.f_name,
                     u.m_name,
                     u.l_name,
+                    u.address,
                     bp.last_name,
                     bp.first_name,
                     bp.middle_name,
